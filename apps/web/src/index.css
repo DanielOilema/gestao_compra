@@ -1,0 +1,44 @@
+@import "@gestao-compra/ui/globals.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --status-pending: 28 92% 54%;
+    --status-pending-foreground: 28 92% 25%;
+    --status-pending-bg: 28 92% 95%;
+    --status-blocked: 0 84% 60%;
+    --status-blocked-foreground: 0 84% 20%;
+    --status-blocked-bg: 0 84% 95%;
+    --status-approved: 142 76% 36%;
+    --status-approved-foreground: 142 76% 15%;
+    --status-approved-bg: 142 76% 95%;
+  }
+
+  .dark {
+    --status-pending-bg: 28 92% 20%;
+    --status-blocked-bg: 0 84% 20%;
+    --status-approved-bg: 142 76% 20%;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .status-card {
+    @apply rounded-xl p-6 transition-all duration-200 cursor-pointer;
+  }
+  .status-card:hover {
+    @apply shadow-lg scale-[1.02];
+  }
+  .status-card-pending {
+    @apply bg-[hsl(var(--status-pending-bg))] border-2 border-[hsl(var(--status-pending))];
+  }
+  .status-card-blocked {
+    @apply bg-[hsl(var(--status-blocked-bg))] border-2 border-[hsl(var(--status-blocked))];
+  }
+  .status-card-approved {
+    @apply bg-[hsl(var(--status-approved-bg))] border-2 border-[hsl(var(--status-approved))];
+  }
+}

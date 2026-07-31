@@ -1,0 +1,34 @@
+import { useQuery } from "@tanstack/react-query";
+import { mapProtheusCcustoResponse } from "@gestao-compra/shared";
+import { useAuth } from "@/contexts/AuthContext";
+import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
+
+export const CCUSTO_PAGE_SIZE = 50;
+
+export interface UseCentrosCustoParams {
+  search: string;
+  enabled?: boolean;
+}
+
+export const useCentrosCusto = ({ search, enabled = true }: UseCentrosCustoParams) => {
+  const { token } = useAuth();
+  const trimmed = search.trim();
+
+  return useQuery({
+    queryKey: ["centros-custo", trimmed],
+    enabled: !!token && enabled && trimmed.length >= 2,
+    queryFn: async () => {
+      const data = await invokeProtheusFunction<Record<string, unknown>>(
+        "protheus-ccusto",
+        {
+          page: 1,
+          pageSize: CCUSTO_PAGE_SIZE,
+          accessToken: token!,
+          filtro: trimmed,
+        },
+        "Falha ao buscar centros de custo",
+      );
+      return mapProtheusCcustoResponse(data ?? {});
+    },
+  });
+};

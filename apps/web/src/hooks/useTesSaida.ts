@@ -1,0 +1,37 @@
+import { useQuery } from "@tanstack/react-query";
+import { mapProtheusTesResponse } from "@gestao-compra/shared";
+import { useAuth } from "@/contexts/AuthContext";
+import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
+
+export const TES_PAGE_SIZE = 50;
+
+export interface UseTesSaidaParams {
+  filial: string;
+  search: string;
+  enabled?: boolean;
+}
+
+export const useTesSaida = ({ filial, search, enabled = true }: UseTesSaidaParams) => {
+  const { token } = useAuth();
+  const trimmed = search.trim();
+  const filialTrimmed = filial.trim();
+
+  return useQuery({
+    queryKey: ["tes-saida", filialTrimmed, trimmed],
+    enabled: !!token && enabled && !!filialTrimmed && trimmed.length >= 2,
+    queryFn: async () => {
+      const data = await invokeProtheusFunction<Record<string, unknown>>(
+        "protheus-tes-saida",
+        {
+          page: 1,
+          pageSize: TES_PAGE_SIZE,
+          filial: filialTrimmed,
+          accessToken: token!,
+          filtro: trimmed,
+        },
+        "Falha ao buscar TES",
+      );
+      return mapProtheusTesResponse(data ?? {});
+    },
+  });
+};

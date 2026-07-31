@@ -1,0 +1,49 @@
+project_id = "pybgbyojihxgfstolvah"
+
+# Auth das APIs Protheus é via Bearer no body (accessToken do login ERP).
+# verify_jwt=false é necessário com a nova publishable key (sb_publishable_...),
+# que não é JWT e falha na verificação automática do gateway.
+[functions.protheus-login]
+verify_jwt = false
+
+[functions.protheus-sc-pendentes]
+verify_jwt = false
+
+[functions.protheus-pedidos-pendentes]
+verify_jwt = false
+
+[functions.protheus-aprova-compra]
+verify_jwt = false
+
+[functions.protheus-lista-solicitacoes]
+verify_jwt = false
+
+[functions.protheus-filiais]
+verify_jwt = false
+
+[functions.protheus-lista-produto]
+verify_jwt = false
+
+[functions.protheus-ccusto]
+verify_jwt = false
+
+[functions.protheus-natureza]
+verify_jwt = false
+
+[functions.protheus-tes-saida]
+verify_jwt = false
+
+[functions.protheus-inclui-sc]
+verify_jwt = false
+
+[functions.protheus-notas-debito-credito]
+verify_jwt = false
+
+[functions.protheus-det-nota-deb-cre]
+verify_jwt = false
+
+[functions.protheus-lista-cli-for]
+verify_jwt = false
+
+[functions.protheus-inclui-nota-dc]
+verify_jwt = false
