@@ -1,8 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { readProtheusText } from '../_shared/protheusResponse.ts';
-
-const URL = protheusUrl('/rest/AprovaCompra');
+import { requirePermission, PermissionError } from '../_shared/checkPermission.ts';
 
 // Extrai o primeiro objeto JSON válido de um texto que pode conter JSON
 // duplicado/concatenado (ex.: `{"success":"true"}{"success":"true"}`).
@@ -65,7 +64,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { filial, numero, tipo, user, acao, observacao, accessToken } = await req.json();
+    const { filial, numero, tipo, user, acao, observacao, accessToken, ambiente } = await req.json();
 
     if (!filial || !numero || !tipo || !user || !acao || !accessToken) {
       return new Response(
@@ -74,7 +73,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(URL, {
+    try {
+      await requirePermission(user, 'aprovacoes');
+    } catch (err) {
+      if (err instanceof PermissionError) {
+        return new Response(
+          JSON.stringify({ success: false, error: err.message }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      throw err;
+    }
+
+    const response = await fetch(protheusUrl('/rest/AprovaCompra', ambiente), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,

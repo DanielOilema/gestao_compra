@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { mapProtheusCcustoResponse } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
 
 export const CCUSTO_PAGE_SIZE = 50;
@@ -12,10 +13,11 @@ export interface UseCentrosCustoParams {
 
 export const useCentrosCusto = ({ search, enabled = true }: UseCentrosCustoParams) => {
   const { token } = useAuth();
+  const { ambiente } = useEnvironment();
   const trimmed = search.trim();
 
   return useQuery({
-    queryKey: ["centros-custo", trimmed],
+    queryKey: ["centros-custo", ambiente, trimmed],
     enabled: !!token && enabled && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(

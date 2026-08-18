@@ -2,8 +2,6 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 
-const URL = protheusUrl('/rest/incluiSC');
-
 const normalizeSuccess = (value: unknown): boolean => {
   if (value === true) return true;
   if (typeof value === 'string') return value.trim().toLowerCase() === 'true';
@@ -27,7 +25,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { accessToken, filial, solicitante, tipoCompra, itens } = body;
+    const { accessToken, filial, solicitante, tipoCompra, itens, ambiente } = body;
 
     if (!accessToken || !filial || !solicitante || !tipoCompra || !Array.isArray(itens) || itens.length === 0) {
       return new Response(
@@ -41,7 +39,7 @@ Deno.serve(async (req) => {
 
     const payload = { filial, solicitante, tipoCompra, itens };
 
-    const response = await fetch(URL, {
+    const response = await fetch(protheusUrl('/rest/incluiSC', ambiente), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { mapProtheusTesResponse } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEnvironment } from "@/contexts/EnvironmentContext";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
 
 export const TES_PAGE_SIZE = 50;
@@ -13,11 +14,12 @@ export interface UseTesSaidaParams {
 
 export const useTesSaida = ({ filial, search, enabled = true }: UseTesSaidaParams) => {
   const { token } = useAuth();
+  const { ambiente } = useEnvironment();
   const trimmed = search.trim();
   const filialTrimmed = filial.trim();
 
   return useQuery({
-    queryKey: ["tes-saida", filialTrimmed, trimmed],
+    queryKey: ["tes-saida", ambiente, filialTrimmed, trimmed],
     enabled: !!token && enabled && !!filialTrimmed && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(

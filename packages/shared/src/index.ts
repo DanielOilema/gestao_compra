@@ -1,4 +1,7 @@
 export * from './types/order';
+export * from './types/permissions';
+export * from './protheusAmbiente';
+export * from './mapProtheusUsers';
 export * from './types/purchaseRequest';
 export * from './types/debitCreditNote';
 export * from './types/solicitacaoInclusao';

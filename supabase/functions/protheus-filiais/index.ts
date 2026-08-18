@@ -2,15 +2,13 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 
-const BASE_URL = protheusUrl('/rest/busca_filiais');
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { accessToken } = await req.json();
+    const { accessToken, ambiente } = await req.json();
 
     if (!accessToken) {
       return new Response(
@@ -19,7 +17,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(BASE_URL, {
+    const response = await fetch(protheusUrl('/rest/busca_filiais', ambiente), {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,

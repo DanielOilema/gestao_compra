@@ -2,8 +2,6 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 
-const BASE_URL = protheusUrl('/rest/busca_solicitacoes_compra');
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -20,6 +18,7 @@ Deno.serve(async (req) => {
       dtInicial,
       dtFinal,
       accessToken,
+      ambiente,
     } = await req.json();
 
     if (page == null || pageSize == null || !accessToken) {
@@ -42,7 +41,8 @@ Deno.serve(async (req) => {
     if (dtInicial?.trim()) params.set('dtInicial', dtInicial.trim());
     if (dtFinal?.trim()) params.set('dtFinal', dtFinal.trim());
 
-    const url = `${BASE_URL}?${params.toString()}`;
+    const baseUrl = protheusUrl('/rest/busca_solicitacoes_compra', ambiente);
+    const url = `${baseUrl}?${params.toString()}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {

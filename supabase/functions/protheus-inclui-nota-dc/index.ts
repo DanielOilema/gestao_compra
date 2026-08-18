@@ -2,8 +2,6 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 
-const URL = protheusUrl('/rest/financeiro/inclui_nota_deb_cred');
-
 const FORMA_PAGAMENTO_CREDITO = '6';
 const FORMAS_DEBITO = new Set(['1', '2', '3', '4', '5']);
 
@@ -106,7 +104,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { accessToken, detNotaDebCre } = body;
+    const { accessToken, detNotaDebCre, ambiente } = body;
 
     if (
       !accessToken ||
@@ -131,7 +129,9 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: pagamentoError });
     }
 
-    const response = await fetch(URL, {
+    const response = await fetch(
+      protheusUrl('/rest/financeiro/inclui_nota_deb_cred', ambiente),
+      {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,

@@ -3,19 +3,22 @@ import { Toaster, Sonner, TooltipProvider, Skeleton } from "@gestao-compra/ui";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
 import InactivityGuard from "@/components/InactivityGuard";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import ProtectedRoute, { PermissionRoute } from "@/components/layout/ProtectedRoute";
 import AuthSessionRedirect from "@/components/layout/AuthSessionRedirect";
+import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import LoginPage from "@/pages/LoginPage";
+import Home from "@/pages/Home";
 import NotFound from "./pages/NotFound";
 
-const Home = lazy(() => import("@/pages/Home"));
 const Dashboard = lazy(() => import("@/pages/aprovacoes/Dashboard"));
 const SolicitacoesCompraLayout = lazy(() => import("@/pages/solicitacoes-compra/SolicitacoesCompraLayout"));
 const NovaSolicitacaoPage = lazy(() => import("@/pages/solicitacoes-compra/NovaSolicitacaoPage"));
 const MinhasSolicitacoesPage = lazy(() => import("@/pages/solicitacoes-compra/MinhasSolicitacoesPage"));
 const NotasLayout = lazy(() => import("@/pages/notas/NotasLayout"));
 const NovaNotaPage = lazy(() => import("@/pages/notas/NovaNotaPage"));
+const PermissoesPage = lazy(() => import("@/pages/admin/PermissoesPage"));
 
 const queryClient = new QueryClient();
 
@@ -34,30 +37,64 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthSessionRedirect />
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
+          <EnvironmentProvider>
+            <AuthSessionRedirect />
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<LoginPage />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/aprovacoes" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Navigate to="/aprovacoes" replace />} />
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/home" element={<Home />} />
+                    <Route
+                      path="/aprovacoes"
+                      element={
+                        <PermissionRoute permission="aprovacoes">
+                          <Dashboard />
+                        </PermissionRoute>
+                      }
+                    />
+                    <Route path="/dashboard" element={<Navigate to="/aprovacoes" replace />} />
 
-                <Route path="/solicitacoes-compra" element={<SolicitacoesCompraLayout />}>
-                  <Route path="nova" element={<NovaSolicitacaoPage />} />
-                  <Route path="minhas" element={<MinhasSolicitacoesPage />} />
-                </Route>
+                    <Route
+                      path="/solicitacoes-compra"
+                      element={
+                        <PermissionRoute permission="solicitacoes-compra">
+                          <SolicitacoesCompraLayout />
+                        </PermissionRoute>
+                      }
+                    >
+                      <Route path="nova" element={<NovaSolicitacaoPage />} />
+                      <Route path="minhas" element={<MinhasSolicitacoesPage />} />
+                    </Route>
 
-                <Route path="/notas-debito-credito" element={<NotasLayout />}>
-                  <Route path="nova" element={<NovaNotaPage />} />
-                  <Route path="listagem" element={<Navigate to="/notas-debito-credito" replace />} />
-                </Route>
-              </Route>
+                    <Route
+                      path="/notas-debito-credito"
+                      element={
+                        <PermissionRoute permission="notas-debito-credito">
+                          <NotasLayout />
+                        </PermissionRoute>
+                      }
+                    >
+                      <Route path="nova" element={<NovaNotaPage />} />
+                      <Route path="listagem" element={<Navigate to="/notas-debito-credito" replace />} />
+                    </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+                    <Route
+                      path="/admin/permissoes"
+                      element={
+                        <PermissionRoute permission="gestao-permissoes">
+                          <PermissoesPage />
+                        </PermissionRoute>
+                      }
+                    />
+                  </Route>
+
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </EnvironmentProvider>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

@@ -1,8 +1,25 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PROTHEUS_AMBIENTE_OPTIONS } from '@gestao-compra/shared';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { Button, Input, Label, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gestao-compra/ui';
-import { Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
+import { useEnvironment } from '@/contexts/EnvironmentContext';
+import {
+  Button,
+  Input,
+  Label,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  RadioGroup,
+  RadioGroupItem,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@gestao-compra/ui';
+import { ChevronDown, Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import logobranca from '@/assets/logobranca.png';
 
@@ -10,12 +27,14 @@ const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [ambienteOpen, setAmbienteOpen] = useState(false);
   const { login, isLoading } = useAuth();
-  
+  const { ambiente, label: ambienteLabel, setAmbiente } = useEnvironment();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!username || !password) {
       toast.error('Preencha usuário e senha');
       return;
@@ -25,6 +44,7 @@ const LoginForm: React.FC = () => {
 
     if (result.success) {
       toast.success('Login realizado com sucesso!');
+      navigate('/home', { replace: true });
     } else {
       toast.error(result.error || `Não foi possível realizar o login para o usuário ${username}`);
     }
@@ -50,6 +70,55 @@ const LoginForm: React.FC = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <Collapsible open={ambienteOpen} onOpenChange={setAmbienteOpen}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="flex flex-col items-start gap-0.5">
+                      <span className="text-xs text-muted-foreground">Ambiente</span>
+                      <span className="font-medium">{ambienteLabel}</span>
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                        ambienteOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2">
+                  <RadioGroup
+                    value={ambiente}
+                    onValueChange={(value) => setAmbiente(value as typeof ambiente)}
+                    className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                    disabled={isLoading}
+                  >
+                    {PROTHEUS_AMBIENTE_OPTIONS.map((option) => {
+                      const selected = option.value === ambiente;
+                      return (
+                        <Label
+                          key={option.value}
+                          htmlFor={`ambiente-${option.value}`}
+                          className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-normal ${
+                            selected
+                              ? "border-primary bg-primary/5 font-medium"
+                              : "border-input bg-background hover:bg-accent/40"
+                          }`}
+                        >
+                          <RadioGroupItem
+                            id={`ambiente-${option.value}`}
+                            value={option.value}
+                            disabled={isLoading}
+                          />
+                          <span>{option.label}</span>
+                        </Label>
+                      );
+                    })}
+                  </RadioGroup>
+                </CollapsibleContent>
+              </Collapsible>
               <div className="space-y-2">
                 <Label htmlFor="username">Usuário</Label>
                 <Input

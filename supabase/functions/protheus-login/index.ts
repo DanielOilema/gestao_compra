@@ -2,15 +2,13 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 
-const PROTHEUS_TOKEN_URL = protheusUrl('/rest/api/oauth2/v1/token?grant_type=password');
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { username, password } = await req.json();
+    const { username, password, ambiente } = await req.json();
 
     if (!username || !password) {
       return new Response(
@@ -19,7 +17,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(PROTHEUS_TOKEN_URL, {
+    const tokenUrl = protheusUrl(
+      '/rest/api/oauth2/v1/token?grant_type=password',
+      ambiente,
+    );
+    const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         username,

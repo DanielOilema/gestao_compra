@@ -1,6 +1,7 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { handleSessionExpired } from "@/lib/sessionExpired";
+import { readStoredProtheusAmbiente } from "@/lib/protheusAmbienteStorage";
 
 interface ProtheusInvokeResponse {
   success?: boolean;
@@ -32,7 +33,10 @@ export async function invokeProtheusFunction<T = unknown>(
   body: Record<string, unknown>,
   defaultError = "Falha na comunicação com o Protheus",
 ): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(functionName, { body });
+  const ambiente = readStoredProtheusAmbiente();
+  const { data, error } = await supabase.functions.invoke(functionName, {
+    body: { ...body, ambiente },
+  });
 
   if (error) {
     const message = await readInvokeErrorMessage(error, defaultError);

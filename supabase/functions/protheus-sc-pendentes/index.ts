@@ -2,15 +2,13 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 
-const BASE_URL = protheusUrl('/rest/busca_sc_pendentes');
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { aprovador, accessToken } = await req.json();
+    const { aprovador, accessToken, ambiente } = await req.json();
 
     if (!aprovador || !accessToken) {
       return new Response(
@@ -19,7 +17,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const url = `${BASE_URL}?Aprovador=${encodeURIComponent(aprovador)}`;
+    const baseUrl = protheusUrl('/rest/busca_sc_pendentes', ambiente);
+    const url = `${baseUrl}?Aprovador=${encodeURIComponent(aprovador)}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
