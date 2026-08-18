@@ -5,13 +5,14 @@ import MenuGrid from "@/components/navigation/MenuGrid";
 
 const Home: React.FC = () => {
   const { user } = useAuth();
+  const firstName = user?.nome?.trim().split(" ")[0] || user?.userName || "usuário";
 
   return (
     <AppLayout>
       <div className="animate-fade-in">
         <div className="mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-            Olá, {user?.nome.split(" ")[0]}!
+            Olá, {firstName}!
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Selecione um módulo para continuar

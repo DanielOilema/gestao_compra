@@ -1,18 +1,20 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const IDLE_LIMIT_MS = 120 * 60 * 1000; // 120 minutos sem interação
-const ABSOLUTE_LIMIT_MS = 120 * 60 * 1000; // 120 minutos após o login
-const LOGIN_AT_KEY = "oilema:auth:loginAt";
+const IDLE_LIMIT_MS = 120 * 60 * 1000;
+const ABSOLUTE_LIMIT_MS = 120 * 60 * 1000;
+export const LOGIN_AT_KEY = "oilema:auth:loginAt";
 const ACTIVITY_EVENTS = ["mousedown", "mousemove", "keydown", "touchstart", "scroll", "click"] as const;
 
 const InactivityGuard: React.FC = () => {
   const { isAuthenticated, expireSession } = useAuth();
   const idleTimerRef = useRef<number | null>(null);
   const absoluteTimerRef = useRef<number | null>(null);
+  const wasAuthenticatedRef = useRef(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
+      wasAuthenticatedRef.current = false;
       try {
         localStorage.removeItem(LOGIN_AT_KEY);
       } catch {
@@ -21,18 +23,26 @@ const InactivityGuard: React.FC = () => {
       return;
     }
 
-    // Marca o instante do login (persistido para sobreviver a refresh)
     let loginAt: number;
     try {
       const stored = localStorage.getItem(LOGIN_AT_KEY);
-      loginAt = stored ? Number(stored) : NaN;
-      if (!Number.isFinite(loginAt) || loginAt <= 0) {
+      const parsed = stored ? Number(stored) : NaN;
+      const sessionExpired =
+        !Number.isFinite(parsed) ||
+        parsed <= 0 ||
+        Date.now() - parsed >= ABSOLUTE_LIMIT_MS;
+
+      if (!wasAuthenticatedRef.current || sessionExpired) {
         loginAt = Date.now();
         localStorage.setItem(LOGIN_AT_KEY, String(loginAt));
+      } else {
+        loginAt = parsed;
       }
     } catch {
       loginAt = Date.now();
     }
+
+    wasAuthenticatedRef.current = true;
 
     const doLogout = (reason: "idle" | "absolute") => {
       try {
@@ -54,12 +64,12 @@ const InactivityGuard: React.FC = () => {
       idleTimerRef.current = window.setTimeout(() => doLogout("idle"), IDLE_LIMIT_MS);
     };
 
-    // Timer absoluto: tempo restante desde o login
     const remainingAbsolute = Math.max(0, ABSOLUTE_LIMIT_MS - (Date.now() - loginAt));
     if (remainingAbsolute === 0) {
       doLogout("absolute");
       return;
     }
+
     absoluteTimerRef.current = window.setTimeout(() => doLogout("absolute"), remainingAbsolute);
 
     resetIdleTimer();

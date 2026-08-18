@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { DebitCreditNote, NotaListRow } from "@gestao-compra/shared";
 import { emptyNotasListFilters, type NotasListFilters } from "./notasListFilters";
 import { getNotasDebitoCredito, NOTAS_PAGE_SIZE } from "@/hooks/getNotasDebitoCredito";
 import { getDetNotaDebCre } from "@/hooks/getDetNotaDebCre";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+
 export function useNotasDebitoCreditoList() {
   const { token } = useAuth();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -20,10 +20,6 @@ export function useNotasDebitoCreditoList() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailNota, setDetailNota] = useState<DebitCreditNote | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const debouncedPesquisa = useDebouncedValue(draftFilters.pesquisa, 400);
-  const appliedFiltersRef = useRef(appliedFilters);
-  appliedFiltersRef.current = appliedFilters;
-  const skipPesquisaLoad = useRef(true);
 
   const loadData = useCallback(
     async (filters: NotasListFilters, targetPage: number) => {
@@ -61,18 +57,14 @@ export function useNotasDebitoCreditoList() {
     void loadData(emptyNotasListFilters(), 1);
   }, [token, loadData]);
 
-  useEffect(() => {
-    if (!token) return;
-    if (skipPesquisaLoad.current) {
-      skipPesquisaLoad.current = false;
-      return;
-    }
-    void loadData({ ...appliedFiltersRef.current, pesquisa: debouncedPesquisa }, 1);
-  }, [debouncedPesquisa, token, loadData]);
-
   const handlePesquisaChange = useCallback((value: string) => {
     setDraftFilters((prev) => ({ ...prev, pesquisa: value }));
   }, []);
+
+  const handlePesquisaSubmit = useCallback(() => {
+    void loadData(draftFilters, 1);
+  }, [draftFilters, loadData]);
+
   const openDetail = useCallback(
     async (nota: DebitCreditNote) => {
       if (!token) return;
@@ -104,6 +96,12 @@ export function useNotasDebitoCreditoList() {
   const handleBuscar = useCallback(() => {
     void loadData(draftFilters, 1);
   }, [draftFilters, loadData]);
+
+  const handleLimpar = useCallback(() => {
+    const emptyFilters = emptyNotasListFilters();
+    setDraftFilters(emptyFilters);
+    void loadData(emptyFilters, 1);
+  }, [loadData]);
 
   const handleNextPage = useCallback(() => {
     if (!hasNextPage || isLoading) return;
@@ -146,7 +144,9 @@ export function useNotasDebitoCreditoList() {
     detailLoading,
     toggleFilters,
     handleBuscar,
+    handleLimpar,
     handlePesquisaChange,
+    handlePesquisaSubmit,
     handleNextPage,
     handlePreviousPage,
     handleSelectRow,

@@ -62,7 +62,11 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+See **[DEPLOY.md](DEPLOY.md)** for:
+
+1. Deploy de produção (Vercel + HTTPS / PWA)
+2. Empacotamento Android com PWABuilder (TWA)
+3. Capacitor (Android Studio / Xcode)
 
 ## Can I connect a custom domain to my Lovable project?
 

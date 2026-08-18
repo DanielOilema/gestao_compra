@@ -10,7 +10,9 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "test": "turbo test",
-    "supabase:functions": "supabase functions serve"
+    "supabase:functions": "supabase functions serve",
+    "mobile:build": "pnpm --filter @gestao-compra/web mobile:build",
+    "cap:android": "pnpm --filter @gestao-compra/web cap:android"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

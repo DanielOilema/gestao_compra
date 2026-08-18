@@ -12,6 +12,8 @@ import {
 } from "@gestao-compra/ui";
 import { toast } from "sonner";
 import AttachmentUpload from "@/components/shared/AttachmentUpload";
+import BrDateInput from "@/components/shared/BrDateInput";
+import { brDateToIso, isoToBrDate } from "@/lib/dateBr";
 import NotaItemsTable, { type NotaItemForm } from "./NotaItemsTable";
 
 const formSchema = z.object({
@@ -20,7 +22,10 @@ const formSchema = z.object({
   descricao: z.string().min(1, "Descrição obrigatória"),
   referenciaPedido: z.string().optional(),
   referenciaFatura: z.string().optional(),
-  data: z.string().min(1, "Data obrigatória"),
+  data: z
+    .string()
+    .min(1, "Data obrigatória")
+    .refine((value) => brDateToIso(value) != null, "Data inválida. Use DD/MM/AAAA"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,6 +38,8 @@ const NotaForm: React.FC = () => {
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -41,9 +48,11 @@ const NotaForm: React.FC = () => {
       descricao: "",
       referenciaPedido: "",
       referenciaFatura: "",
-      data: new Date().toISOString().slice(0, 10),
+      data: isoToBrDate(new Date().toISOString().slice(0, 10)),
     },
   });
+
+  const dataValue = watch("data");
 
   const onSubmit = (data: FormValues) => {
     const parsed = formSchema.safeParse({ ...data, tipo });
@@ -82,7 +91,11 @@ const NotaForm: React.FC = () => {
         </div>
         <div className="space-y-2">
           <Label htmlFor="data">Data *</Label>
-          <Input id="data" type="date" {...register("data")} />
+          <BrDateInput
+            id="data"
+            value={dataValue}
+            onChange={(value) => setValue("data", value, { shouldValidate: true })}
+          />
           {errors.data && <p className="text-sm text-destructive">{errors.data.message}</p>}
         </div>
       </div>

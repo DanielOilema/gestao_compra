@@ -10,9 +10,17 @@
     "lint": "eslint . --config ../../eslint.config.js",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios",
+    "mobile:build": "vite build && cap sync",
+    "pwa:package": "node scripts/pwa-package.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/ios": "^7.4.2",
     "@gestao-compra/shared": "workspace:*",
     "@gestao-compra/ui": "workspace:*",
     "@supabase/supabase-js": "^2.105.4",
@@ -23,9 +31,11 @@
     "react-hook-form": "^7.61.1",
     "react-router-dom": "^6.30.1",
     "sonner": "^1.7.4",
+    "workbox-window": "^7.4.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.2",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",
@@ -46,6 +56,7 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^3.2.4"
   }
 }

@@ -23,7 +23,9 @@ const ListagemNotasPage: React.FC = () => {
     detailLoading,
     toggleFilters,
     handleBuscar,
+    handleLimpar,
     handlePesquisaChange,
+    handlePesquisaSubmit,
     handleNextPage,
     handlePreviousPage,
     handleSelectRow,
@@ -37,6 +39,8 @@ const ListagemNotasPage: React.FC = () => {
         onToggleFilters={toggleFilters}
         search={draftFilters.pesquisa}
         onSearchChange={handlePesquisaChange}
+        onSearchSubmit={handlePesquisaSubmit}
+        onClear={handleLimpar}
         isLoading={isLoading}
       />
       <NotasFiltersSection

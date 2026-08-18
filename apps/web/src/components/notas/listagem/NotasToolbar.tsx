@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Filter, ChevronUp } from "lucide-react";
+import { Plus, Filter, ChevronUp, X } from "lucide-react";
 import { Button, cn } from "@gestao-compra/ui";
 import NotasSearchInput from "./NotasSearchInput";
 
@@ -9,6 +9,8 @@ interface NotasToolbarProps {
   onToggleFilters: () => void;
   search: string;
   onSearchChange: (value: string) => void;
+  onSearchSubmit: () => void;
+  onClear: () => void;
   isLoading?: boolean;
 }
 
@@ -17,6 +19,8 @@ const NotasToolbar: React.FC<NotasToolbarProps> = ({
   onToggleFilters,
   search,
   onSearchChange,
+  onSearchSubmit,
+  onClear,
   isLoading,
 }) => {
   const navigate = useNavigate();
@@ -41,10 +45,20 @@ const NotasToolbar: React.FC<NotasToolbarProps> = ({
           )}
           Filtros
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onClear}
+          disabled={isLoading}
+        >
+          <X className="mr-2 h-4 w-4" />
+          Limpar
+        </Button>
       </div>
       <NotasSearchInput
         value={search}
         onChange={onSearchChange}
+        onSubmit={onSearchSubmit}
         disabled={isLoading}
         className="w-full"
       />

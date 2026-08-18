@@ -36,3 +36,14 @@ export const maskBrDateInput = (raw: string): string => {
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 };
+
+/**
+ * Normaliza data de filtro/formulário para YYYY-MM-DD (API).
+ * Aceita DD/MM/AAAA ou YYYY-MM-DD; retorna "" se vazio/inválido.
+ */
+export const toApiDate = (value?: string): string => {
+  const raw = value?.trim() ?? "";
+  if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  return brDateToIso(raw) ?? "";
+};

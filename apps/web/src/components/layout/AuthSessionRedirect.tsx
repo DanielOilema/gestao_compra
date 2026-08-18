@@ -10,6 +10,11 @@ const AuthSessionRedirect: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated && location.pathname !== "/") {
       navigate("/", { replace: true });
+      return;
+    }
+
+    if (isAuthenticated && location.pathname === "/") {
+      navigate("/home", { replace: true });
     }
   }, [isAuthenticated, location.pathname, navigate]);
 

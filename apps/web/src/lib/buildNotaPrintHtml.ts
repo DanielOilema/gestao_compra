@@ -4,7 +4,9 @@ import {
   formatNotaPrintCurrency,
   formatNotaPrintDate,
   getNotaPrintFormaPagamento,
+  getNotaPrintItemCentroCusto,
   getNotaPrintItemDescription,
+  getNotaPrintNumeroDoc,
   getNotaPrintNumeroLabel,
   getNotaPrintResponsavel,
   getNotaPrintTitle,
@@ -39,6 +41,7 @@ const renderPartyBlock = (lines: string[]): string => {
 };
 
 const renderItems = (nota: DebitCreditNote): string => {
+  const showCentroCusto = nota.tipo === "debito";
   const rows = nota.itens.length
     ? nota.itens
     : [
@@ -55,6 +58,11 @@ const renderItems = (nota: DebitCreditNote): string => {
       (item) => `
         <tr>
           <td>${escapeHtml(getNotaPrintItemDescription(item))}</td>
+          ${
+            showCentroCusto
+              ? `<td class="centro-custo">${escapeHtml(getNotaPrintItemCentroCusto(item))}</td>`
+              : ""
+          }
           <td class="value">${escapeHtml(formatNotaPrintCurrency(item.valor))}</td>
         </tr>
       `,
@@ -71,6 +79,8 @@ export const buildNotaPrintHtml = (
   const recebedorLines = formatNotaParteLines(getNotaRecebedorParte(nota));
   const tomadorLines = formatNotaParteLines(getNotaTomadorParte(nota));
   const total = getNotaPrintTotal(nota);
+  const numeroDoc = getNotaPrintNumeroDoc(nota);
+  const isDebito = nota.tipo === "debito";
   const logoUrl = options.logoUrl?.trim() ?? "";
 
   const logoMarkup = logoUrl
@@ -114,9 +124,6 @@ export const buildNotaPrintHtml = (
       }
 
       .brand-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
         margin-bottom: 10mm;
       }
 
@@ -131,13 +138,6 @@ export const buildNotaPrintHtml = (
         font-size: 18pt;
         font-weight: 700;
         color: #4a555c;
-      }
-
-      .filial-tag {
-        font-size: 9pt;
-        color: #5f676d;
-        text-align: right;
-        padding-top: 2mm;
       }
 
       .doc-title {
@@ -251,6 +251,10 @@ export const buildNotaPrintHtml = (
         white-space: nowrap;
       }
 
+      td.centro-custo, th.centro-custo {
+        width: 38mm;
+      }
+
       .total-row td {
         font-size: 10pt;
         font-weight: 700;
@@ -276,6 +280,10 @@ export const buildNotaPrintHtml = (
         color: #2f3438;
       }
 
+      .numero-doc {
+        margin-top: 8mm;
+      }
+
       @media print {
         body {
           font-size: 10pt;
@@ -291,7 +299,6 @@ export const buildNotaPrintHtml = (
     <div class="page">
       <header class="brand-header">
         ${logoMarkup}
-        <div class="filial-tag">Filial ${escapeHtml(nota.filial || "-")}</div>
       </header>
 
       <h1 class="doc-title">${escapeHtml(title)}</h1>
@@ -328,6 +335,7 @@ export const buildNotaPrintHtml = (
         <thead>
           <tr>
             <th>Descrição do Item (Observação)</th>
+            ${isDebito ? `<th class="centro-custo">Centro de Custo</th>` : ""}
             <th class="value">Valor Total</th>
           </tr>
         </thead>
@@ -335,6 +343,7 @@ export const buildNotaPrintHtml = (
           ${renderItems(nota)}
           <tr class="total-row">
             <td>TOTAL</td>
+            ${isDebito ? "<td></td>" : ""}
             <td class="value">${escapeHtml(formatNotaPrintCurrency(total))}</td>
           </tr>
         </tbody>
@@ -350,6 +359,14 @@ export const buildNotaPrintHtml = (
           <div class="footer-value">${escapeHtml(getNotaPrintResponsavel(nota))}</div>
         </div>
       </div>
+
+      ${
+        numeroDoc
+          ? `<div class="numero-doc">
+        <div class="footer-value">${escapeHtml(numeroDoc)}</div>
+      </div>`
+          : ""
+      }
     </div>
   </body>
 </html>`;

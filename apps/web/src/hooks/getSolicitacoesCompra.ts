@@ -2,6 +2,7 @@ import type { PurchaseRequest } from "@gestao-compra/shared";
 import { mapProtheusListaSolicitacoesResponse } from "@gestao-compra/shared";
 import type { SolicitacaoCompraListFilters } from "@/components/solicitacoes/listagem/solicitacaoCompraListFilters";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
+import { toApiDate } from "@/lib/dateBr";
 
 export const SOLICITACOES_PAGE_SIZE = 20;
 
@@ -33,8 +34,11 @@ export async function getSolicitacoesCompra({
   if (filters.numSC.trim()) body.numSC = filters.numSC.trim();
   if (filters.produto.trim()) body.produto = filters.produto.trim();
   if (filters.solicitante.trim()) body.solicitante = filters.solicitante.trim();
-  if (filters.dataInicio.trim()) body.dtInicial = filters.dataInicio.trim();
-  if (filters.dataFim.trim()) body.dtFinal = filters.dataFim.trim();
+
+  const dtInicial = toApiDate(filters.dataInicio);
+  const dtFinal = toApiDate(filters.dataFim);
+  if (dtInicial) body.dtInicial = dtInicial;
+  if (dtFinal) body.dtFinal = dtFinal;
 
   const data = await invokeProtheusFunction<Record<string, unknown>>(
     "protheus-lista-solicitacoes",

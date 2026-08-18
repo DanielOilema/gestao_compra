@@ -1,11 +1,11 @@
 import {
-  filterNotasByPesquisa,
   flattenNotasToRows,
   mapProtheusNotasDebitoCreditoResponse,
   type DebitCreditNote,
   type NotaListRow,
 } from "@gestao-compra/shared";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
+import { toApiDate } from "@/lib/dateBr";
 import type { NotasListFilters } from "@/components/notas/listagem/notasListFilters";
 
 export const NOTAS_PAGE_SIZE = 20;
@@ -30,6 +30,10 @@ export async function getNotasDebitoCredito({
   pageSize,
   accessToken,
 }: GetNotasDebitoCreditoParams): Promise<GetNotasDebitoCreditoResult> {
+  const dtInicial = toApiDate(filters.dataInicio);
+  const dtFinal = toApiDate(filters.dataFim);
+  const filtro = filters.pesquisa.trim();
+
   const data = await invokeProtheusFunction<Record<string, unknown>>(
     "protheus-notas-debito-credito",
     {
@@ -43,21 +47,18 @@ export async function getNotasDebitoCredito({
             ? "D"
             : "",
       cliFor: filters.cliFor.trim() || undefined,
-      filtro: filters.pesquisa.trim() || undefined,
-      dtInicial: filters.dataInicio.trim() || undefined,
-      dtFinal: filters.dataFim.trim() || undefined,
+      filtro: filtro || undefined,
+      dtInicial: dtInicial || undefined,
+      dtFinal: dtFinal || undefined,
     },
     "Falha ao buscar notas de débito/crédito",
   );
 
   const mapped = mapProtheusNotasDebitoCreditoResponse(data ?? {});
   const tipoFiltro = filters.tipo !== "all" ? filters.tipo : null;
-  const notas = filterNotasByPesquisa(
-    tipoFiltro
-      ? mapped.notas.map((nota) => ({ ...nota, tipo: tipoFiltro }))
-      : mapped.notas,
-    filters.pesquisa,
-  );
+  const notas = tipoFiltro
+    ? mapped.notas.map((nota) => ({ ...nota, tipo: tipoFiltro }))
+    : mapped.notas;
 
   return {
     notas,

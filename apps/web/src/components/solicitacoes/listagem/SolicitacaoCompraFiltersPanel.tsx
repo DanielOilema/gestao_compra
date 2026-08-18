@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@gestao-compra/ui";
+import BrDateInput from "@/components/shared/BrDateInput";
 import type { SolicitacaoCompraListFilters } from "./solicitacaoCompraListFilters";
 
 interface SolicitacaoCompraFiltersPanelProps {
@@ -99,20 +100,18 @@ const SolicitacaoCompraFiltersPanel: React.FC<SolicitacaoCompraFiltersPanelProps
         </div>
         <div className="space-y-2">
           <Label htmlFor="filtro-data-inicio">Data inicial</Label>
-          <Input
+          <BrDateInput
             id="filtro-data-inicio"
-            type="date"
             value={filters.dataInicio}
-            onChange={(e) => update({ dataInicio: e.target.value })}
+            onChange={(dataInicio) => update({ dataInicio })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="filtro-data-fim">Data final</Label>
-          <Input
+          <BrDateInput
             id="filtro-data-fim"
-            type="date"
             value={filters.dataFim}
-            onChange={(e) => update({ dataFim: e.target.value })}
+            onChange={(dataFim) => update({ dataFim })}
           />
         </div>
       </div>

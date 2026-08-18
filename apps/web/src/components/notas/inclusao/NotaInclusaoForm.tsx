@@ -22,7 +22,8 @@ import {
 } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIncluiNotaDC } from "@/hooks/useIncluiNotaDC";
-import { brDateToIso, isoToBrDate, maskBrDateInput } from "@/lib/dateBr";
+import { brDateToIso, isoToBrDate } from "@/lib/dateBr";
+import BrDateInput from "@/components/shared/BrDateInput";
 import FilialSelect from "@/components/solicitacoes/inclusao/FilialSelect";
 import CliForCombobox from "./CliForCombobox";
 import NaturezaCombobox from "./NaturezaCombobox";
@@ -335,27 +336,19 @@ const NotaInclusaoForm: React.FC = () => {
         </NotaFormField>
 
         <NotaFormField label="Data de emissão" htmlFor="data-emissao" required>
-          <Input
+          <BrDateInput
             id="data-emissao"
-            type="text"
-            inputMode="numeric"
-            placeholder="DD/MM/AAAA"
-            maxLength={10}
             value={dataEmissao}
-            onChange={(e) => setDataEmissao(maskBrDateInput(e.target.value))}
+            onChange={setDataEmissao}
             disabled={isSubmitting}
           />
         </NotaFormField>
 
         <NotaFormField label="Data de vencimento" htmlFor="data-vencimento" required>
-          <Input
+          <BrDateInput
             id="data-vencimento"
-            type="text"
-            inputMode="numeric"
-            placeholder="DD/MM/AAAA"
-            maxLength={10}
             value={dataVencimento}
-            onChange={(e) => setDataVencimento(maskBrDateInput(e.target.value))}
+            onChange={setDataVencimento}
             disabled={isSubmitting}
           />
         </NotaFormField>

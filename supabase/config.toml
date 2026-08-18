@@ -47,3 +47,18 @@ verify_jwt = false
 
 [functions.protheus-inclui-nota-dc]
 verify_jwt = false
+
+[functions.protheus-users]
+verify_jwt = false
+
+[functions.permissoes-por-usuario]
+verify_jwt = false
+
+[functions.permissoes-listar]
+verify_jwt = false
+
+[functions.permissoes-salvar]
+verify_jwt = false
+
+[functions.permissoes-importar]
+verify_jwt = false

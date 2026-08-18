@@ -12,9 +12,7 @@ interface MenuModuleGroupProps {
 }
 
 const MenuModuleGroup: React.FC<MenuModuleGroupProps> = ({ group }) => {
-  const enabledRoutines = group.routines.filter((routine) => routine.enabled);
-
-  if (enabledRoutines.length === 0) return null;
+  if (group.routines.length === 0) return null;
 
   return (
     <AccordionItem
@@ -28,7 +26,7 @@ const MenuModuleGroup: React.FC<MenuModuleGroupProps> = ({ group }) => {
       </AccordionTrigger>
       <AccordionContent>
         <div className="flex flex-col gap-2 pb-3">
-          {enabledRoutines.map((routine) => (
+          {group.routines.map((routine) => (
             <MenuCard
               key={routine.id}
               title={routine.title}

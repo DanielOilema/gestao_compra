@@ -1,7 +1,8 @@
 import React from "react";
 import type { NotaStatus, NotaTipo } from "@gestao-compra/shared";
-import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input } from "@gestao-compra/ui";
+import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@gestao-compra/ui";
 import OrderSearchBar from "@/components/OrderSearchBar";
+import BrDateInput from "@/components/shared/BrDateInput";
 
 export interface NotasFiltersState {
   search: string;
@@ -61,20 +62,18 @@ const NotasFilters: React.FC<NotasFiltersProps> = ({ filters, onChange }) => {
         </div>
         <div className="space-y-2">
           <Label htmlFor="notaDataInicio">Data início</Label>
-          <Input
+          <BrDateInput
             id="notaDataInicio"
-            type="date"
             value={filters.dataInicio}
-            onChange={(e) => onChange({ ...filters, dataInicio: e.target.value })}
+            onChange={(dataInicio) => onChange({ ...filters, dataInicio })}
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="notaDataFim">Data fim</Label>
-          <Input
+          <BrDateInput
             id="notaDataFim"
-            type="date"
             value={filters.dataFim}
-            onChange={(e) => onChange({ ...filters, dataFim: e.target.value })}
+            onChange={(dataFim) => onChange({ ...filters, dataFim })}
           />
         </div>
       </div>

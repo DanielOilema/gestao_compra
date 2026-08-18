@@ -17,7 +17,8 @@ import {
 } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIncluiSolicitacao } from "@/hooks/useIncluiSolicitacao";
-import { brDateToIso, isoToBrDate, maskBrDateInput } from "@/lib/dateBr";
+import { brDateToIso, isoToBrDate } from "@/lib/dateBr";
+import BrDateInput from "@/components/shared/BrDateInput";
 import FilialSelect from "./inclusao/FilialSelect";
 import TipoCompraSelect from "./inclusao/TipoCompraSelect";
 import ProdutoCombobox from "./inclusao/ProdutoCombobox";
@@ -320,15 +321,11 @@ const SolicitacaoForm: React.FC = () => {
             required
             error={draftErrors.dataEntrega}
           >
-            <Input
+            <BrDateInput
               id="data-entrega"
-              type="text"
-              inputMode="numeric"
-              placeholder="DD/MM/AAAA"
-              maxLength={10}
               value={draft.dataEntrega}
               disabled={!filialSelected || !tipoCompra}
-              onChange={(e) => updateDraft("dataEntrega", maskBrDateInput(e.target.value))}
+              onChange={(value) => updateDraft("dataEntrega", value)}
             />
           </FormField>
         </FormGrid>

@@ -153,10 +153,31 @@ export const getNotaTomadorParte = (nota: DebitCreditNote): NotaParte =>
   nota.tipo === "credito" ? getNotaCliForParte(nota) : getNotaFilialParte(nota);
 
 export const getNotaPrintItemDescription = (item: NotaItem): string => {
-  const descricao = item.descricao?.trim() || item.produto?.trim() || "-";
+  const produto = item.produto?.trim() ?? "";
+  const descricao = item.descricao?.trim() ?? "";
+
+  let label = "-";
+  if (produto && descricao) {
+    label = `${produto}-${descricao}`;
+  } else if (produto) {
+    label = produto;
+  } else if (descricao) {
+    label = descricao;
+  }
+
   const observacao = item.observacao?.trim();
-  if (!observacao) return descricao;
-  return `${descricao} (${observacao})`;
+  if (!observacao) return label;
+  return `${label} (${observacao})`;
+};
+
+export const getNotaPrintItemCentroCusto = (item: NotaItem): string => {
+  const codigo = item.codigoCentroCusto?.trim() ?? "";
+  const descricao = item.descricaoCentroCusto?.trim() ?? "";
+
+  if (codigo && descricao) return `${codigo}-${descricao}`;
+  if (codigo) return codigo;
+  if (descricao) return descricao;
+  return "-";
 };
 
 export const getNotaPrintResponsavel = (nota: DebitCreditNote): string => {
@@ -174,3 +195,6 @@ export const getNotaPrintTotal = (nota: DebitCreditNote): number => {
   }
   return nota.valorTotal || 0;
 };
+
+export const getNotaPrintNumeroDoc = (nota: DebitCreditNote): string =>
+  nota.numeroDoc?.trim() || "";

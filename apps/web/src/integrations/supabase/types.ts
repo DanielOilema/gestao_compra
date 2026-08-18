@@ -14,7 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_users: {
+        Row: {
+          id: string
+          user_name: string
+          display_name: string
+          is_admin: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          user_name: string
+          display_name?: string
+          is_admin?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_name?: string
+          display_name?: string
+          is_admin?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_routine_permissions: {
+        Row: {
+          user_id: string
+          routine_id: string
+          granted: boolean
+        }
+        Insert: {
+          user_id: string
+          routine_id: string
+          granted?: boolean
+        }
+        Update: {
+          user_id?: string
+          routine_id?: string
+          granted?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_routine_permissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

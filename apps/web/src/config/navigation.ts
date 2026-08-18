@@ -1,4 +1,5 @@
 import { CheckSquare, FileText, Receipt, type LucideIcon } from "lucide-react";
+import type { RoutinePermissionId } from "@gestao-compra/shared";
 
 export interface AppRoutine {
   id: string;
@@ -7,6 +8,8 @@ export interface AppRoutine {
   path: string;
   icon: LucideIcon;
   enabled: boolean;
+  permissionKey: RoutinePermissionId;
+  adminOnly?: boolean;
 }
 
 /** @deprecated Use AppRoutine */
@@ -30,6 +33,7 @@ export const appModuleGroups: AppModuleGroup[] = [
         path: "/aprovacoes",
         icon: CheckSquare,
         enabled: true,
+        permissionKey: "aprovacoes",
       },
       {
         id: "solicitacoes-compra",
@@ -38,6 +42,7 @@ export const appModuleGroups: AppModuleGroup[] = [
         path: "/solicitacoes-compra",
         icon: FileText,
         enabled: true,
+        permissionKey: "solicitacoes-compra",
       },
       {
         id: "notas-debito-credito",
@@ -46,9 +51,14 @@ export const appModuleGroups: AppModuleGroup[] = [
         path: "/notas-debito-credito",
         icon: Receipt,
         enabled: true,
+        permissionKey: "notas-debito-credito",
       },
     ],
   },
 ];
 
 export const appModules: AppRoutine[] = appModuleGroups.flatMap((group) => group.routines);
+
+export const routinePermissionIds: RoutinePermissionId[] = appModules.map(
+  (routine) => routine.permissionKey,
+);

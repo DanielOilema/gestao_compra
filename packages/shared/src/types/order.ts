@@ -37,10 +37,16 @@ export interface OrderSummary {
   totalValue: number;
 }
 
+import type { RoutinePermissionId } from './permissions';
+
 export interface User {
   id: string;
   nome: string;
   email: string;
   alcada: number;
   filial: string;
+  protheusId?: string;
+  userName?: string;
+  isAdmin?: boolean;
+  permissions?: RoutinePermissionId[];
 }
