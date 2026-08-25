@@ -1,9 +1,18 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { User, type RoutinePermissionId, type UserPermissionsResponse } from '@gestao-compra/shared';
+import {
+  User,
+  normalizeProtheusAmbiente,
+  type ProtheusAmbiente,
+  type RoutinePermissionId,
+  type UserPermissionsResponse,
+} from '@gestao-compra/shared';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { registerSessionExpiredHandler } from '@/lib/sessionExpired';
-import { readStoredProtheusAmbiente } from '@/lib/protheusAmbienteStorage';
+import {
+  readStoredProtheusAmbiente,
+  writeStoredProtheusAmbiente,
+} from '@/lib/protheusAmbienteStorage';
 
 interface AuthContextType {
   user: User | null;
@@ -13,7 +22,11 @@ interface AuthContextType {
   isAdmin: boolean;
   permissions: RoutinePermissionId[];
   hasPermission: (permission: RoutinePermissionId) => boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    username: string,
+    password: string,
+    ambiente?: ProtheusAmbiente,
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   expireSession: (message?: string) => void;
 }
@@ -98,11 +111,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   const login = useCallback(
-    async (username: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    async (
+      username: string,
+      password: string,
+      ambiente?: ProtheusAmbiente,
+    ): Promise<{ success: boolean; error?: string }> => {
       setIsLoading(true);
       try {
+        const selectedAmbiente = normalizeProtheusAmbiente(
+          ambiente ?? readStoredProtheusAmbiente(),
+        );
+        writeStoredProtheusAmbiente(selectedAmbiente);
+
         const { data, error } = await supabase.functions.invoke('protheus-login', {
-          body: { username, password, ambiente: readStoredProtheusAmbiente() },
+          body: { username, password, ambiente: selectedAmbiente },
         });
 
         if (error) {

@@ -1,4 +1,11 @@
-import { CheckSquare, FileText, Receipt, type LucideIcon } from "lucide-react";
+import {
+  CheckSquare,
+  FileText,
+  Landmark,
+  Receipt,
+  ShoppingCart,
+  type LucideIcon,
+} from "lucide-react";
 import type { RoutinePermissionId } from "@gestao-compra/shared";
 
 export interface AppRoutine {
@@ -52,6 +59,31 @@ export const appModuleGroups: AppModuleGroup[] = [
         icon: Receipt,
         enabled: true,
         permissionKey: "notas-debito-credito",
+      },
+    ],
+  },
+  {
+    id: "relatorios",
+    title: "Relatórios",
+    routines: [
+      {
+        id: "relatorios-financeiro",
+        title: "Relatórios do Financeiro",
+        description: "Consultar indicadores e relatórios do módulo financeiro",
+        path: "/relatorios/financeiro",
+        icon: Landmark,
+        // Habilitado quando o primeiro relatório do módulo entrar no catálogo.
+        enabled: false,
+        permissionKey: "relatorios-financeiro",
+      },
+      {
+        id: "relatorios-compras",
+        title: "Relatórios de Compras",
+        description: "Consultar indicadores e relatórios do módulo de compras",
+        path: "/relatorios/compras",
+        icon: ShoppingCart,
+        enabled: false,
+        permissionKey: "relatorios-compras",
       },
     ],
   },

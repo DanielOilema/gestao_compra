@@ -10,6 +10,7 @@ interface SolicitacaoCompraToolbarProps {
   hasSelection: boolean;
   filtersOpen: boolean;
   onToggleFilters: () => void;
+  exportSlot?: React.ReactNode;
 }
 
 const SolicitacaoCompraToolbar: React.FC<SolicitacaoCompraToolbarProps> = ({
@@ -17,6 +18,7 @@ const SolicitacaoCompraToolbar: React.FC<SolicitacaoCompraToolbarProps> = ({
   hasSelection,
   filtersOpen,
   onToggleFilters,
+  exportSlot,
 }) => {
   const navigate = useNavigate();
 
@@ -51,6 +53,7 @@ const SolicitacaoCompraToolbar: React.FC<SolicitacaoCompraToolbarProps> = ({
         )}
         Filtros
       </Button>
+      {exportSlot}
     </div>
   );
 };

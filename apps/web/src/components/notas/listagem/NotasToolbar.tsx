@@ -12,6 +12,7 @@ interface NotasToolbarProps {
   onSearchSubmit: () => void;
   onClear: () => void;
   isLoading?: boolean;
+  exportSlot?: React.ReactNode;
 }
 
 const NotasToolbar: React.FC<NotasToolbarProps> = ({
@@ -22,6 +23,7 @@ const NotasToolbar: React.FC<NotasToolbarProps> = ({
   onSearchSubmit,
   onClear,
   isLoading,
+  exportSlot,
 }) => {
   const navigate = useNavigate();
 
@@ -54,6 +56,7 @@ const NotasToolbar: React.FC<NotasToolbarProps> = ({
           <X className="mr-2 h-4 w-4" />
           Limpar
         </Button>
+        {exportSlot}
       </div>
       <NotasSearchInput
         value={search}

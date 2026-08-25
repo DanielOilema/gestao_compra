@@ -133,6 +133,7 @@ export function useNotasDebitoCreditoList() {
     setFiltersOpen,
     draftFilters,
     setDraftFilters,
+    appliedFilters,
     isLoading,
     page,
     hasNextPage,

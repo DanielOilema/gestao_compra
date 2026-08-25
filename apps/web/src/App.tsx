@@ -18,6 +18,9 @@ const NovaSolicitacaoPage = lazy(() => import("@/pages/solicitacoes-compra/NovaS
 const MinhasSolicitacoesPage = lazy(() => import("@/pages/solicitacoes-compra/MinhasSolicitacoesPage"));
 const NotasLayout = lazy(() => import("@/pages/notas/NotasLayout"));
 const NovaNotaPage = lazy(() => import("@/pages/notas/NovaNotaPage"));
+const RelatoriosLayout = lazy(() => import("@/pages/relatorios/RelatoriosLayout"));
+const RelatoriosModulePage = lazy(() => import("@/pages/relatorios/RelatoriosModulePage"));
+const RelatorioPage = lazy(() => import("@/pages/relatorios/RelatorioPage"));
 const PermissoesPage = lazy(() => import("@/pages/admin/PermissoesPage"));
 
 const queryClient = new QueryClient();
@@ -78,6 +81,12 @@ const App = () => (
                     >
                       <Route path="nova" element={<NovaNotaPage />} />
                       <Route path="listagem" element={<Navigate to="/notas-debito-credito" replace />} />
+                    </Route>
+
+                    {/* A permissão é por módulo e vem da URL, então o guard fica em RelatoriosLayout. */}
+                    <Route path="/relatorios/:moduloId" element={<RelatoriosLayout />}>
+                      <Route index element={<RelatoriosModulePage />} />
+                      <Route path=":reportId" element={<RelatorioPage />} />
                     </Route>
 
                     <Route

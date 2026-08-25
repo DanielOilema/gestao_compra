@@ -2,11 +2,16 @@ import { describe, expect, it } from "vitest";
 import { buildUserMenu, hasRoutineAccess } from "@/lib/buildUserMenu";
 import { appModuleGroups } from "@/config/navigation";
 
+const enabledRoutineCount = appModuleGroups.reduce(
+  (acc, group) => acc + group.routines.filter((routine) => routine.enabled).length,
+  0,
+);
+
 describe("buildUserMenu", () => {
-  it("shows all menu routines for admin", () => {
+  it("shows all enabled menu routines for admin", () => {
     const menu = buildUserMenu(appModuleGroups, [], true);
     const routineCount = menu.reduce((acc, group) => acc + group.routines.length, 0);
-    expect(routineCount).toBe(3);
+    expect(routineCount).toBe(enabledRoutineCount);
   });
 
   it("shows only granted routines for regular user", () => {
@@ -15,6 +20,18 @@ describe("buildUserMenu", () => {
     expect(paths).toEqual(["/solicitacoes-compra"]);
   });
 
+  it("hides disabled routines even for admin", () => {
+    const menu = buildUserMenu(appModuleGroups, [], true);
+    const ids = menu.flatMap((group) => group.routines.map((routine) => routine.id));
+    const disabledIds = appModuleGroups
+      .flatMap((group) => group.routines)
+      .filter((routine) => !routine.enabled)
+      .map((routine) => routine.id);
+
+    for (const id of disabledIds) {
+      expect(ids).not.toContain(id);
+    }
+  });
 });
 
 describe("hasRoutineAccess", () => {

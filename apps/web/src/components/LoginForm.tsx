@@ -40,7 +40,7 @@ const LoginForm: React.FC = () => {
       return;
     }
 
-    const result = await login(username, password);
+    const result = await login(username, password, ambiente);
 
     if (result.success) {
       toast.success('Login realizado com sucesso!');

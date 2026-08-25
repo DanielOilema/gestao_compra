@@ -34,9 +34,11 @@ export const EnvironmentProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const [ambiente, setAmbienteState] = useState<ProtheusAmbiente>(() =>
-    readStoredProtheusAmbiente(),
-  );
+  const [ambiente, setAmbienteState] = useState<ProtheusAmbiente>(() => {
+    const stored = readStoredProtheusAmbiente();
+    writeStoredProtheusAmbiente(stored);
+    return stored;
+  });
 
   const setAmbiente = useCallback(
     (next: ProtheusAmbiente) => {

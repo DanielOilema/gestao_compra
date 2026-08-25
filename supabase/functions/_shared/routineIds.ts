@@ -1,7 +1,10 @@
+// Mantenha em sincronia com ROUTINE_PERMISSION_IDS em packages/shared/src/types/permissions.ts
 export const ROUTINE_IDS = [
   'aprovacoes',
   'solicitacoes-compra',
   'notas-debito-credito',
+  'relatorios-financeiro',
+  'relatorios-compras',
   'gestao-permissoes',
 ] as const;
 

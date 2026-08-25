@@ -1,14 +1,21 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
-import { protheusUrl } from '../_shared/protheusConfig.ts';
+import { getProtheusBaseUrl, normalizeProtheusAmbiente, protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+
+function sanitizeErrorMessage(message: string): string {
+  return message.replace(/password=[^&\s)]*/gi, 'password=***');
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let selectedAmbiente = normalizeProtheusAmbiente(undefined);
+
   try {
     const { username, password, ambiente } = await req.json();
+    selectedAmbiente = normalizeProtheusAmbiente(ambiente);
 
     if (!username || !password) {
       return new Response(
@@ -17,10 +24,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const tokenUrl = protheusUrl(
-      '/rest/api/oauth2/v1/token?grant_type=password',
-      ambiente,
-    );
+    const tokenUrl = new URL(protheusUrl('/rest/api/oauth2/v1/token', selectedAmbiente));
+    tokenUrl.searchParams.set('grant_type', 'password');
+
     const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -62,11 +68,14 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido';
+    const message = sanitizeErrorMessage(
+      err instanceof Error ? err.message : 'Erro desconhecido',
+    );
+    const baseUrl = getProtheusBaseUrl(selectedAmbiente);
     return new Response(
       JSON.stringify({
         success: false,
-        error: `Não foi possível conectar ao Protheus: ${message}`,
+        error: `Não foi possível conectar ao Protheus (${selectedAmbiente}: ${baseUrl}): ${message}`,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
