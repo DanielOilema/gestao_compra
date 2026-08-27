@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PROTHEUS_AMBIENTE_OPTIONS } from '@gestao-compra/shared';
+import { PROTHEUS_AMBIENTE_OPTIONS, looksLikeEmail, PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE } from '@gestao-compra/shared';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useEnvironment } from '@/contexts/EnvironmentContext';
@@ -40,6 +40,11 @@ const LoginForm: React.FC = () => {
       return;
     }
 
+    if (looksLikeEmail(username)) {
+      toast.error(PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE);
+      return;
+    }
+
     const result = await login(username, password, ambiente);
 
     if (result.success) {
@@ -65,7 +70,7 @@ const LoginForm: React.FC = () => {
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl text-center">Entrar</CardTitle>
             <CardDescription className="text-center">
-              Use suas credenciais do Protheus
+              Use o usuário do Protheus, não o e-mail
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -124,7 +129,10 @@ const LoginForm: React.FC = () => {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Digite seu usuário"
+                  placeholder="Ex.: daniel.silveira"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={isLoading}

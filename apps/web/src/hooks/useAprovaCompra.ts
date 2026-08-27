@@ -8,8 +8,9 @@ import { invokeProtheusFunction } from '@/lib/invokeProtheusFunction';
 import { handleSessionExpired } from '@/lib/sessionExpired';
 
 type Acao = 'liberar' | 'bloquear';
+export type AprovaCompraDocumento = 'pedido' | 'solicitacao';
 
-export const useAprovaCompra = (order: Order) => {
+export const useAprovaCompra = (order: Order, documento: AprovaCompraDocumento = 'pedido') => {
   const { user, token, expireSession } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +32,7 @@ export const useAprovaCompra = (order: Order) => {
           {
             filial: order.filial,
             numero: order.numero,
-            tipo: 'IP',
+            tipo: documento === 'solicitacao' ? 'SC' : 'IP',
             user: user.nome,
             acao,
             observacao,
@@ -52,7 +53,13 @@ export const useAprovaCompra = (order: Order) => {
 
         toast.success(
           message ||
-            (acao === 'liberar' ? 'Pedido aprovado com sucesso' : 'Pedido bloqueado com sucesso'),
+            (acao === 'liberar'
+              ? documento === 'solicitacao'
+                ? 'Solicitação aprovada com sucesso'
+                : 'Pedido aprovado com sucesso'
+              : documento === 'solicitacao'
+                ? 'Solicitação bloqueada com sucesso'
+                : 'Pedido bloqueado com sucesso'),
         );
 
         await Promise.all([
@@ -71,7 +78,7 @@ export const useAprovaCompra = (order: Order) => {
         setIsLoading(false);
       }
     },
-    [order.filial, order.numero, user, token, queryClient, expireSession],
+    [order.filial, order.numero, documento, user, token, queryClient, expireSession],
   );
 
   return {

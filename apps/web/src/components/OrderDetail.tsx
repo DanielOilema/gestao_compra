@@ -59,7 +59,7 @@ const formatObservacao = (obs?: string, solicitante?: string): string => {
 const OrderDetail: React.FC<OrderDetailProps> = ({ order, onBack, tipo = "pedido" }) => {
   const [observacao, setObservacao] = useState("");
   const [obsError, setObsError] = useState<string | undefined>();
-  const { aprovar, bloquear, isLoading } = useAprovaCompra(order);
+  const { aprovar, bloquear, isLoading } = useAprovaCompra(order, tipo);
 
   const handleBlock = async () => {
     if (!observacao.trim()) {

@@ -3,6 +3,7 @@ export * from './types/permissions';
 export * from './types/report';
 export * from './reportFormat';
 export * from './protheusAmbiente';
+export * from './protheusUserName';
 export * from './mapProtheusUsers';
 export * from './types/purchaseRequest';
 export * from './types/debitCreditNote';

@@ -1,0 +1,12 @@
+---
+description: Use the GitHub remote as the only destination for commits and pushes
+alwaysApply: true
+---
+
+# GitHub remote
+
+The canonical repository is https://github.com/DanielOilema/gestao_compra.git (`origin`).
+
+- Commit in this local repo and push to `origin` (GitHub). Do not create another GitHub repo or use Cursor Origin (`origin.cursor.com`).
+- When the user asks to commit (or "commit no GitHub"), commit here and push the current branch to `origin`.
+- Keep `origin` pointing at `https://github.com/DanielOilema/gestao_compra.git`. Do not change remotes unless the user asks.

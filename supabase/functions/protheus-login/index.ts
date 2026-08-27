@@ -1,6 +1,10 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { getProtheusBaseUrl, normalizeProtheusAmbiente, protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import {
+  looksLikeEmail,
+  PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE,
+} from '../_shared/protheusUserName.ts';
 
 function sanitizeErrorMessage(message: string): string {
   return message.replace(/password=[^&\s)]*/gi, 'password=***');
@@ -16,11 +20,19 @@ Deno.serve(async (req) => {
   try {
     const { username, password, ambiente } = await req.json();
     selectedAmbiente = normalizeProtheusAmbiente(ambiente);
+    const loginUserName = typeof username === 'string' ? username.trim() : '';
 
-    if (!username || !password) {
+    if (!loginUserName || !password) {
       return new Response(
         JSON.stringify({ success: false, error: 'Usuário e senha são obrigatórios' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (looksLikeEmail(loginUserName)) {
+      return new Response(
+        JSON.stringify({ success: false, error: PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
@@ -30,7 +42,7 @@ Deno.serve(async (req) => {
     const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
-        username,
+        username: loginUserName,
         password,
         'Content-Type': 'application/json',
       },
@@ -54,7 +66,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Não foi possível realizar o login para o usuário ${username}`,
+          error: `Não foi possível realizar o login para o usuário ${loginUserName}`,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );

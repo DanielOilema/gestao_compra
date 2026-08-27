@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import {
   User,
   normalizeProtheusAmbiente,
+  looksLikeEmail,
+  normalizeProtheusLoginUserName,
+  PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE,
   type ProtheusAmbiente,
   type RoutinePermissionId,
   type UserPermissionsResponse,
@@ -116,6 +119,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password: string,
       ambiente?: ProtheusAmbiente,
     ): Promise<{ success: boolean; error?: string }> => {
+      const loginUserName = normalizeProtheusLoginUserName(username);
+      if (looksLikeEmail(loginUserName)) {
+        return { success: false, error: PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE };
+      }
+
       setIsLoading(true);
       try {
         const selectedAmbiente = normalizeProtheusAmbiente(
@@ -124,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         writeStoredProtheusAmbiente(selectedAmbiente);
 
         const { data, error } = await supabase.functions.invoke('protheus-login', {
-          body: { username, password, ambiente: selectedAmbiente },
+          body: { username: loginUserName, password, ambiente: selectedAmbiente },
         });
 
         if (error) {
@@ -143,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           let permissionsData: UserPermissionsResponse;
           try {
-            permissionsData = await fetchUserPermissions(username);
+            permissionsData = await fetchUserPermissions(loginUserName);
           } catch (permError) {
             return {
               success: false,
@@ -154,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
           }
 
-          const profile = buildUserProfile(username, permissionsData);
+          const profile = buildUserProfile(loginUserName, permissionsData);
 
           permissionsRefreshedRef.current = true;
           setToken(accessToken);
@@ -171,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         return {
           success: false,
-          error: data?.error || `Não foi possível realizar o login para o usuário ${username}`,
+          error: data?.error || `Não foi possível realizar o login para o usuário ${loginUserName}`,
         };
       } catch {
         return {

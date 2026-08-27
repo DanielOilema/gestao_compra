@@ -5,6 +5,10 @@ import {
   provisionUserIfMissing,
   resolveGrantedPermissions,
 } from '../_shared/permissionsDb.ts';
+import {
+  looksLikeEmail,
+  PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE,
+} from '../_shared/protheusUserName.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -22,6 +26,13 @@ Deno.serve(async (req) => {
     }
 
     const normalizedUserName = userName.trim();
+    if (looksLikeEmail(normalizedUserName)) {
+      return new Response(
+        JSON.stringify({ success: false, error: PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     let user = await findUserByUserName(normalizedUserName);
 
     if (!user) {
