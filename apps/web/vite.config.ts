@@ -24,13 +24,16 @@ export default defineConfig(({ mode }) => ({
         "apple-touch-icon.png",
       ],
       manifest: {
+        id: "/",
         name: "Protheus Connect",
         short_name: "Protheus",
         description: "Gestão de compras, aprovações e integração Protheus",
+        lang: "pt-BR",
         theme_color: "#f59e0b",
         background_color: "#f8f9fb",
         display: "standalone",
         start_url: "/",
+        scope: "/",
         icons: [
           {
             src: "/pwa-192x192.png",

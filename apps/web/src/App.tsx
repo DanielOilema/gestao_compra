@@ -10,6 +10,7 @@ import AuthSessionRedirect from "@/components/layout/AuthSessionRedirect";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
 import LoginPage from "@/pages/LoginPage";
 import Home from "@/pages/Home";
+import PwaInstallGate from "@/components/PwaInstallGate";
 import NotFound from "./pages/NotFound";
 
 const Dashboard = lazy(() => import("@/pages/aprovacoes/Dashboard"));
@@ -36,6 +37,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
+        <PwaInstallGate />
         <InactivityGuard />
         <Toaster />
         <Sonner />

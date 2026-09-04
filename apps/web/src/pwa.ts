@@ -1,7 +1,10 @@
 import { registerSW } from "virtual:pwa-register";
 import { toast } from "sonner";
+import { captureInstallPromptEarly } from "./lib/pwa-install";
 
 export function registerPWA() {
+  captureInstallPromptEarly();
+
   const updateSW = registerSW({
     onNeedRefresh() {
       toast("Nova versão disponível", {

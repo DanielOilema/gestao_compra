@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PROTHEUS_AMBIENTE_OPTIONS, looksLikeEmail, PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE } from '@gestao-compra/shared';
 
@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEnvironment } from '@/contexts/EnvironmentContext';
 import {
   Button,
+  Checkbox,
   Input,
   Label,
   Card,
@@ -22,15 +23,37 @@ import {
 import { ChevronDown, Loader2, LogIn, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import logobranca from '@/assets/logobranca.png';
+import {
+  clearSavedCredentials,
+  readSavedCredentials,
+  writeSavedCredentials,
+} from '@/lib/savedCredentials';
 
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [savePassword, setSavePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [ambienteOpen, setAmbienteOpen] = useState(false);
   const { login, isLoading } = useAuth();
   const { ambiente, label: ambienteLabel, setAmbiente } = useEnvironment();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const saved = readSavedCredentials();
+    if (!saved) return;
+    setUsername(saved.username);
+    setPassword(saved.password);
+    setSavePassword(true);
+  }, []);
+
+  const handleSavePasswordChange = (checked: boolean | 'indeterminate') => {
+    const next = checked === true;
+    setSavePassword(next);
+    if (!next) {
+      clearSavedCredentials();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +71,11 @@ const LoginForm: React.FC = () => {
     const result = await login(username, password, ambiente);
 
     if (result.success) {
+      if (savePassword) {
+        writeSavedCredentials(username, password);
+      } else {
+        clearSavedCredentials();
+      }
       toast.success('Login realizado com sucesso!');
       navigate('/home', { replace: true });
     } else {
@@ -128,6 +156,7 @@ const LoginForm: React.FC = () => {
                 <Label htmlFor="username">Usuário</Label>
                 <Input
                   id="username"
+                  name="username"
                   type="text"
                   placeholder="Ex.: daniel.silveira"
                   autoComplete="username"
@@ -144,8 +173,10 @@ const LoginForm: React.FC = () => {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Digite sua senha"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
@@ -160,6 +191,17 @@ const LoginForm: React.FC = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="save-password"
+                  checked={savePassword}
+                  onCheckedChange={handleSavePasswordChange}
+                  disabled={isLoading}
+                />
+                <Label htmlFor="save-password" className="cursor-pointer text-sm font-normal">
+                  Salvar senha
+                </Label>
               </div>
               <Button
                 type="submit"
