@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 const normalizeSuccess = (value: unknown): boolean => {
   if (value === true) return true;
@@ -25,13 +26,13 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { accessToken, filial, solicitante, tipoCompra, itens, ambiente } = body;
+    const { basicAuth, filial, solicitante, tipoCompra, itens, ambiente } = body;
 
-    if (!accessToken || !filial || !solicitante || !tipoCompra || !Array.isArray(itens) || itens.length === 0) {
+    if (!isValidBasicAuth(basicAuth) || !filial || !solicitante || !tipoCompra || !Array.isArray(itens) || itens.length === 0) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'filial, solicitante, tipoCompra, itens e accessToken são obrigatórios',
+          error: `filial, solicitante, tipoCompra, itens e ${BASIC_AUTH_REQUIRED_MESSAGE}`,
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -42,7 +43,7 @@ Deno.serve(async (req) => {
     const response = await fetch(protheusUrl('/rest/incluiSC', ambiente), {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),

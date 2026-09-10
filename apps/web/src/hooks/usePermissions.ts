@@ -30,11 +30,11 @@ async function invokePermissionsFunction<T>(
 }
 
 export function usePermissionsList() {
-  const { user, token, hasPermission } = useAuth();
+  const { user, protheusAuth, hasPermission } = useAuth();
 
   return useQuery({
     queryKey: ["permissoes", "listar"],
-    enabled: hasPermission("gestao-permissoes") && !!token,
+    enabled: hasPermission("gestao-permissoes") && !!protheusAuth,
     queryFn: () =>
       invokePermissionsFunction<AppUser[]>(
         "permissoes-listar",
@@ -45,7 +45,7 @@ export function usePermissionsList() {
 }
 
 export function useImportUsers() {
-  const { user, token } = useAuth();
+  const { user, protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const queryClient = useQueryClient();
 
@@ -55,7 +55,7 @@ export function useImportUsers() {
         "permissoes-importar",
         {
           userName: user!.userName ?? user!.nome,
-          accessToken: token!,
+          basicAuth: protheusAuth!,
           ambiente,
         },
         "Falha ao importar usuários",

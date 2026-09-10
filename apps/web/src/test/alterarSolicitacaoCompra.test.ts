@@ -1,0 +1,251 @@
+import { describe, expect, it } from "vitest";
+import { isSolicitacaoAlterFormDirty } from "@/components/solicitacoes/inclusao/solicitacaoFormDirty";
+import {
+  ALTERAR_SOLICITACAO_SOLICITANTE_MESSAGE,
+  ALTERAR_SOLICITACAO_STATUS_MESSAGE,
+  canAlterSolicitacaoCompra,
+  getAlterarSolicitacaoMessage,
+  isSolicitacaoCompraStatusAlteravel,
+  isSolicitanteDaSolicitacao,
+  mapFormToAlteraSCPayload,
+  mapProtheusListaSolicitacoesResponse,
+  mapProtheusTipoCompra,
+  mapPurchaseRequestToSolicitacaoDraft,
+  type PurchaseRequest,
+} from "@gestao-compra/shared";
+
+const user = { nome: "Daniel Silveira", userName: "daniel.silveira" };
+
+const baseRequest = (overrides: Partial<PurchaseRequest> = {}): PurchaseRequest => ({
+  id: "SC-0101-000123",
+  numero: "000123",
+  dataCriacao: "2026-08-01",
+  status: "aberto",
+  solicitante: "Daniel Silveira",
+  filial: "0101",
+  tipoCompra: "1",
+  itens: [
+    {
+      id: "item-1",
+      item: "0001",
+      produto: "8001000013",
+      unidade: "UN",
+      descricao: "BIG BAG",
+      quantidade: 10,
+      valorEstimado: 0,
+      status: "aberto",
+      codigoCentroCusto: "1101",
+      descricaoCentroCusto: "ADMIN",
+      dataEntrega: "2026-08-10",
+    },
+  ],
+  ...overrides,
+});
+
+describe("isSolicitacaoCompraStatusAlteravel", () => {
+  it("allows aberto and bloqueada", () => {
+    expect(isSolicitacaoCompraStatusAlteravel("aberto")).toBe(true);
+    expect(isSolicitacaoCompraStatusAlteravel("bloqueada")).toBe(true);
+    expect(isSolicitacaoCompraStatusAlteravel("Bloqueada")).toBe(true);
+  });
+
+  it("rejects other statuses", () => {
+    expect(isSolicitacaoCompraStatusAlteravel("em_cotacao")).toBe(false);
+    expect(isSolicitacaoCompraStatusAlteravel("totalmente_atendida")).toBe(false);
+    expect(isSolicitacaoCompraStatusAlteravel("rejeitada")).toBe(false);
+    expect(isSolicitacaoCompraStatusAlteravel("pendente")).toBe(false);
+  });
+});
+
+describe("isSolicitanteDaSolicitacao", () => {
+  it("matches display name ignoring case and accents", () => {
+    expect(isSolicitanteDaSolicitacao("DANIEL SILVEIRA", user)).toBe(true);
+    expect(isSolicitanteDaSolicitacao("Daniel Silveira", user)).toBe(true);
+  });
+
+  it("matches Protheus userName", () => {
+    expect(isSolicitanteDaSolicitacao("daniel.silveira", user)).toBe(true);
+  });
+
+  it("rejects another requester", () => {
+    expect(isSolicitanteDaSolicitacao("Maria Santos", user)).toBe(false);
+  });
+});
+
+describe("canAlterSolicitacaoCompra", () => {
+  it("allows the requester to alter an open request", () => {
+    expect(canAlterSolicitacaoCompra(baseRequest(), user)).toEqual({ ok: true });
+  });
+
+  it("allows the requester to alter a blocked request", () => {
+    expect(
+      canAlterSolicitacaoCompra(
+        baseRequest({
+          status: "bloqueada",
+          itens: [{ ...baseRequest().itens[0], status: "bloqueada" }],
+        }),
+        user,
+      ),
+    ).toEqual({ ok: true });
+  });
+
+  it("blocks other statuses", () => {
+    const result = canAlterSolicitacaoCompra(
+      baseRequest({
+        status: "em_cotacao",
+        itens: [{ ...baseRequest().itens[0], status: "em_cotacao" }],
+      }),
+      user,
+    );
+    expect(result).toEqual({ ok: false, reason: "status" });
+    expect(getAlterarSolicitacaoMessage(result)).toBe(ALTERAR_SOLICITACAO_STATUS_MESSAGE);
+  });
+
+  it("blocks when any item is not open or blocked", () => {
+    const result = canAlterSolicitacaoCompra(
+      baseRequest({
+        itens: [
+          { ...baseRequest().itens[0], status: "aberto" },
+          { ...baseRequest().itens[0], id: "item-2", item: "0002", status: "em_cotacao" },
+        ],
+      }),
+      user,
+    );
+    expect(result).toEqual({ ok: false, reason: "status" });
+  });
+
+  it("blocks a different requester", () => {
+    const result = canAlterSolicitacaoCompra(baseRequest(), {
+      nome: "Maria Santos",
+      userName: "maria.santos",
+    });
+    expect(result).toEqual({ ok: false, reason: "solicitante" });
+    expect(getAlterarSolicitacaoMessage(result)).toBe(ALTERAR_SOLICITACAO_SOLICITANTE_MESSAGE);
+  });
+});
+
+describe("mapPurchaseRequestToSolicitacaoDraft", () => {
+  it("copies header and items for the alter form", () => {
+    const draft = mapPurchaseRequestToSolicitacaoDraft(baseRequest());
+    expect(draft.filial).toBe("0101");
+    expect(draft.tipoCompra).toBe("1");
+    expect(draft.numeroSC).toBe("000123");
+    expect(draft.itens[0]).toMatchObject({
+      item: "0001",
+      produto: "8001000013",
+      centroCusto: "1101",
+      quantidade: 10,
+      dataEntrega: "2026-08-10",
+    });
+  });
+
+  it("falls back to emission date when the item has no delivery date", () => {
+    const draft = mapPurchaseRequestToSolicitacaoDraft(
+      baseRequest({
+        itens: [{ ...baseRequest().itens[0], dataEntrega: undefined }],
+      }),
+    );
+    expect(draft.itens[0].dataEntrega).toBe("2026-08-01");
+  });
+});
+
+describe("mapFormToAlteraSCPayload", () => {
+  it("sends numeroSC and original item codes", () => {
+    const payload = mapFormToAlteraSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "2",
+        itens: [
+          {
+            produto: "8001000013",
+            produtoDescricao: "BIG BAG",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 12,
+            dataEntrega: "2026-08-12",
+            item: "0001",
+          },
+        ],
+      },
+      "Daniel Silveira",
+      "000123",
+    );
+
+    expect(payload).toEqual({
+      filial: "0101",
+      numeroSC: "000123",
+      solicitante: "Daniel Silveira",
+      tipoCompra: "2",
+      itens: [
+        {
+          item: "0001",
+          codigoProduto: "8001000013",
+          quantidade: 12,
+          centroCusto: "1101",
+          observacao: undefined,
+          dataEntrega: "2026-08-12",
+        },
+      ],
+    });
+  });
+});
+
+describe("mapProtheusTipoCompra", () => {
+  it("maps codes and labels", () => {
+    expect(mapProtheusTipoCompra("1")).toBe("1");
+    expect(mapProtheusTipoCompra("Urgente")).toBe("2");
+    expect(mapProtheusTipoCompra("Imediato/Direto")).toBe("3");
+  });
+});
+
+describe("mapProtheusListaSolicitacoesResponse", () => {
+  it("maps tipoCompra and dataEntrega from list lines", () => {
+    const mapped = mapProtheusListaSolicitacoesResponse({
+      SOLICITACOES: [
+        {
+          filial: "0101",
+          numero: "000123",
+          item: "0001",
+          produto: "P1",
+          descricao: "Produto",
+          quant: 2,
+          solicitante: "Daniel Silveira",
+          status: "Aberto",
+          tipoCompra: "2",
+          entrega: "2026-08-20",
+        },
+      ],
+    });
+
+    expect(mapped.requests[0].tipoCompra).toBe("2");
+    expect(mapped.requests[0].itens[0].dataEntrega).toBe("2026-08-20");
+  });
+});
+
+describe("isSolicitacaoAlterFormDirty", () => {
+  it("is clean when the loaded request was not changed", () => {
+    const draft = mapPurchaseRequestToSolicitacaoDraft(baseRequest());
+    expect(
+      isSolicitacaoAlterFormDirty(draft, draft, {
+        produto: "",
+        centroCusto: "",
+        quantidade: 1,
+        observacao: "",
+        dataEntrega: "",
+      }),
+    ).toBe(false);
+  });
+
+  it("detects item quantity changes", () => {
+    const draft = mapPurchaseRequestToSolicitacaoDraft(baseRequest());
+    expect(
+      isSolicitacaoAlterFormDirty(
+        draft,
+        { ...draft, itens: [{ ...draft.itens[0], quantidade: 99 }] },
+        { produto: "", centroCusto: "", quantidade: 1, dataEntrega: "" },
+      ),
+    ).toBe(true);
+  });
+});
+

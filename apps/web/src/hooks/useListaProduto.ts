@@ -12,20 +12,20 @@ export interface UseListaProdutoParams {
 }
 
 export const useListaProduto = ({ search, enabled = true }: UseListaProdutoParams) => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const trimmed = search.trim();
 
   return useQuery({
     queryKey: ["lista-produto", ambiente, trimmed],
-    enabled: !!token && enabled && trimmed.length >= 2,
+    enabled: !!protheusAuth && enabled && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(
         "protheus-lista-produto",
         {
           page: 1,
           pageSize: PRODUTO_PAGE_SIZE,
-          accessToken: token!,
+          basicAuth: protheusAuth!,
           filtro: trimmed,
         },
         "Falha ao buscar produtos",

@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 const FORMA_PAGAMENTO_CREDITO = '6';
 const FORMAS_DEBITO = new Set(['1', '2', '3', '4', '5']);
@@ -104,10 +105,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { accessToken, detNotaDebCre, ambiente } = body;
+    const { basicAuth, detNotaDebCre, ambiente } = body;
 
     if (
-      !accessToken ||
+      !isValidBasicAuth(basicAuth) ||
       !detNotaDebCre ||
       typeof detNotaDebCre !== 'object' ||
       !detNotaDebCre.filial ||
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
       return jsonResponse({
         success: false,
         error:
-          'detNotaDebCre.filial, tipo, clifor, loja, itens e accessToken são obrigatórios',
+          `detNotaDebCre.filial, tipo, clifor, loja, itens e ${BASIC_AUTH_REQUIRED_MESSAGE}`,
       });
     }
 
@@ -134,7 +135,7 @@ Deno.serve(async (req) => {
       {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ detNotaDebCre }),

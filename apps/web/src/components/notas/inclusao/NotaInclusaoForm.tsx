@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -35,6 +35,11 @@ import NotaFormField from "./NotaFormField";
 import NotaFormSection from "./NotaFormSection";
 import { NotaFormGrid, NotaFormGridItem } from "./NotaFormGrid";
 import { useNotaLeave } from "./NotaLeaveContext";
+import {
+  emptyNotaInclusaoDraft,
+  mapNotaToInclusaoDraft,
+  type NovaNotaLocationState,
+} from "./copyNotaDebCre";
 
 const todayBrDate = () => isoToBrDate(new Date().toISOString().slice(0, 10));
 
@@ -43,34 +48,43 @@ const formatCurrency = (value: number) =>
 
 const NotaInclusaoForm: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { setIsDirty, confirmLeave } = useNotaLeave();
   const incluiMutation = useIncluiNotaDC();
+  const [initialDraft] = React.useState(() => {
+    const copyFrom = (location.state as NovaNotaLocationState | null)?.copyFrom;
+    return copyFrom ? mapNotaToInclusaoDraft(copyFrom) : emptyNotaInclusaoDraft();
+  });
 
-  const [filial, setFilial] = React.useState("");
-  const [tipo, setTipo] = React.useState<NotaTipo>("debito");
-  const [cliForKey, setCliForKey] = React.useState("");
-  const [cliForLabel, setCliForLabel] = React.useState("");
-  const [codigoCliFor, setCodigoCliFor] = React.useState("");
-  const [lojaCliFor, setLojaCliFor] = React.useState("");
-  const [nomeCliFor, setNomeCliFor] = React.useState("");
-  const [cnpj, setCnpj] = React.useState("");
+  const [filial, setFilial] = React.useState(initialDraft.filial);
+  const [tipo, setTipo] = React.useState<NotaTipo>(initialDraft.tipo);
+  const [cliForKey, setCliForKey] = React.useState(initialDraft.cliForKey);
+  const [cliForLabel, setCliForLabel] = React.useState(initialDraft.cliForLabel);
+  const [codigoCliFor, setCodigoCliFor] = React.useState(initialDraft.codigoCliFor);
+  const [lojaCliFor, setLojaCliFor] = React.useState(initialDraft.lojaCliFor);
+  const [nomeCliFor, setNomeCliFor] = React.useState(initialDraft.nomeCliFor);
+  const [cnpj, setCnpj] = React.useState(initialDraft.cnpj);
   const [dataEmissao, setDataEmissao] = React.useState(todayBrDate());
   const [dataVencimento, setDataVencimento] = React.useState("");
-  const [referenteA, setReferenteA] = React.useState("");
-  const [formaPagamento, setFormaPagamento] = React.useState<FormaPagamentoNotaDC | "">("");
-  const [banco, setBanco] = React.useState("");
-  const [agencia, setAgencia] = React.useState("");
-  const [conta, setConta] = React.useState("");
-  const [nomeRecebedor, setNomeRecebedor] = React.useState("");
-  const [cpfCnpjRecebedor, setCpfCnpjRecebedor] = React.useState("");
-  const [setor, setSetor] = React.useState("");
-  const [setorLabel, setSetorLabel] = React.useState("");
-  const [natureza, setNatureza] = React.useState("");
-  const [naturezaLabel, setNaturezaLabel] = React.useState("");
-  const [tes, setTes] = React.useState("");
-  const [tesLabel, setTesLabel] = React.useState("");
-  const [itens, setItens] = React.useState<NotaItemDraft[]>([]);
+  const [referenteA, setReferenteA] = React.useState(initialDraft.referenteA);
+  const [formaPagamento, setFormaPagamento] = React.useState<FormaPagamentoNotaDC | "">(
+    initialDraft.formaPagamento,
+  );
+  const [banco, setBanco] = React.useState(initialDraft.banco);
+  const [agencia, setAgencia] = React.useState(initialDraft.agencia);
+  const [conta, setConta] = React.useState(initialDraft.conta);
+  const [nomeRecebedor, setNomeRecebedor] = React.useState(initialDraft.nomeRecebedor);
+  const [cpfCnpjRecebedor, setCpfCnpjRecebedor] = React.useState(initialDraft.cpfCnpjRecebedor);
+  const [setor, setSetor] = React.useState(initialDraft.setor);
+  const [setorLabel, setSetorLabel] = React.useState(initialDraft.setorLabel);
+  const [natureza, setNatureza] = React.useState(initialDraft.natureza);
+  const [naturezaLabel, setNaturezaLabel] = React.useState(initialDraft.naturezaLabel);
+  const [tes, setTes] = React.useState(initialDraft.tes);
+  const [tesLabel, setTesLabel] = React.useState(initialDraft.tesLabel);
+  const [itens, setItens] = React.useState<NotaItemDraft[]>(initialDraft.itens);
+  const prevTipoRef = React.useRef(tipo);
+  const prevFilialRef = React.useRef(filial);
 
   const isCredito = tipo === "credito";
   const isDepositoForma = isDeposito(formaPagamento);
@@ -148,11 +162,15 @@ const NotaInclusaoForm: React.FC = () => {
   }, [isCredito]);
 
   React.useEffect(() => {
+    if (prevFilialRef.current === filial) return;
+    prevFilialRef.current = filial;
     setTes("");
     setTesLabel("");
   }, [filial]);
 
   React.useEffect(() => {
+    if (prevTipoRef.current === tipo) return;
+    prevTipoRef.current = tipo;
     setCliForKey("");
     setCliForLabel("");
     setCodigoCliFor("");

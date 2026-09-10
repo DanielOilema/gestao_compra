@@ -1,7 +1,13 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { PurchaseRequest, SolicitacaoCompraRow } from "@gestao-compra/shared";
-import { flattenPurchaseRequests } from "@gestao-compra/shared";
+import {
+  ALTERAR_SOLICITACAO_SELECIONE_MESSAGE,
+  canAlterSolicitacaoCompra,
+  flattenPurchaseRequests,
+  getAlterarSolicitacaoMessage,
+} from "@gestao-compra/shared";
 import {
   emptySolicitacaoCompraListFilters,
   type SolicitacaoCompraListFilters,
@@ -13,7 +19,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useSolicitacaoCompraList() {
-  const { token } = useAuth();
+  const { protheusAuth, user } = useAuth();
+  const navigate = useNavigate();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState<SolicitacaoCompraListFilters>(
     emptySolicitacaoCompraListFilters(),
@@ -30,7 +37,7 @@ export function useSolicitacaoCompraList() {
 
   const loadData = useCallback(
     async (filters: SolicitacaoCompraListFilters, targetPage: number) => {
-      if (!token) return;
+      if (!protheusAuth) return;
 
       setIsLoading(true);
       try {
@@ -38,7 +45,7 @@ export function useSolicitacaoCompraList() {
           filters,
           page: targetPage,
           pageSize: SOLICITACOES_PAGE_SIZE,
-          accessToken: token,
+          basicAuth: protheusAuth,
         });
         setRequests(result.requests);
         setHasNextPage(result.hasNextPage);
@@ -55,14 +62,14 @@ export function useSolicitacaoCompraList() {
         setIsLoading(false);
       }
     },
-    [token],
+    [protheusAuth],
   );
 
   useEffect(() => {
-    if (token) {
+    if (protheusAuth) {
       void loadData(emptySolicitacaoCompraListFilters(), 1);
     }
-  }, [token, loadData]);
+  }, [protheusAuth, loadData]);
 
   const filteredRows = useMemo(
     () => flattenPurchaseRequests(requests),
@@ -110,6 +117,23 @@ export function useSolicitacaoCompraList() {
     return true;
   }, [selectedRequest]);
 
+  const handleAlterar = useCallback(() => {
+    if (!selectedRequest) {
+      toast.warning(ALTERAR_SOLICITACAO_SELECIONE_MESSAGE);
+      return false;
+    }
+
+    const eligibility = canAlterSolicitacaoCompra(selectedRequest, user);
+    if (!eligibility.ok) {
+      toast.warning(getAlterarSolicitacaoMessage(eligibility));
+      return false;
+    }
+
+    setDetailOpen(false);
+    navigate("/solicitacoes-compra/alterar", { state: { request: selectedRequest } });
+    return true;
+  }, [navigate, selectedRequest, user]);
+
   const handleCloseDetail = useCallback(() => {
     setDetailOpen(false);
   }, []);
@@ -135,6 +159,7 @@ export function useSolicitacaoCompraList() {
     handlePreviousPage,
     handleSelectRow,
     handleVisualizar,
+    handleAlterar,
     handleCloseDetail,
   };
 }

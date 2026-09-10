@@ -22,6 +22,17 @@ export const getSetorNotaDCLabel = (codigo: string): string => {
   return option ? `${option.codigo} - ${option.descricao}` : codigo;
 };
 
+export const getSetorNotaDCCodigo = (value?: string): string => {
+  if (!value?.trim()) return "";
+  const normalized = value.trim();
+  const byCode = SETOR_NOTA_DC_OPTIONS.find((item) => item.codigo === normalized);
+  if (byCode) return byCode.codigo;
+  const byDescricao = SETOR_NOTA_DC_OPTIONS.find(
+    (item) => item.descricao.toUpperCase() === normalized.toUpperCase(),
+  );
+  return byDescricao?.codigo ?? normalized;
+};
+
 export const getSetorNotaDCDescricao = (value?: string): string => {
   if (!value?.trim()) return "";
   const normalized = value.trim();

@@ -10,7 +10,7 @@ export interface GetSolicitacoesCompraParams {
   filters: SolicitacaoCompraListFilters;
   page: number;
   pageSize: number;
-  accessToken: string;
+  basicAuth: string;
 }
 
 export interface GetSolicitacoesCompraResult {
@@ -22,12 +22,12 @@ export async function getSolicitacoesCompra({
   filters,
   page,
   pageSize,
-  accessToken,
+  basicAuth,
 }: GetSolicitacoesCompraParams): Promise<GetSolicitacoesCompraResult> {
   const body: Record<string, string | number> = {
     page,
     pageSize,
-    accessToken,
+    basicAuth,
   };
 
   if (filters.filial.trim()) body.filial = filters.filial.trim();

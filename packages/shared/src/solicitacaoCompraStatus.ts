@@ -72,3 +72,17 @@ export const getSolicitacaoCompraStatusLabel = (
 export const getSolicitacaoCompraStatusDotClass = (
   status: SolicitacaoCompraProtheusStatus,
 ): string => STATUS_DOT_CLASSES[status];
+
+export const isSolicitacaoCompraStatusAlteravel = (
+  status?: string,
+): boolean => {
+  if (!status) return false;
+  const key = normalizeStatusKey(status);
+  if (!key) return false;
+  if (EXACT_STATUS_MAP[key] === "aberto" || EXACT_STATUS_MAP[key] === "bloqueada") {
+    return true;
+  }
+  if (key === "aberto") return true;
+  if (key.includes("bloquead")) return true;
+  return false;
+};

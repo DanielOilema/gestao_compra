@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { DebitCreditNote } from "@gestao-compra/shared";
 import { getFormaPagamentoLabel } from "@gestao-compra/shared";
@@ -18,6 +19,7 @@ import {
   Building2,
   Printer,
   Ban,
+  Copy,
   CreditCard,
   Loader2,
   ScrollText,
@@ -26,6 +28,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { printNotaDebCre, startNotaPrintSession } from "@/lib/printNotaDebCre";
 import StatusBadge from "@/components/shared/StatusBadge";
 import NotaDetailItensSection from "./NotaDetailItensSection";
+import type { NovaNotaLocationState } from "@/components/notas/inclusao/copyNotaDebCre";
 
 
 interface NotasDetailContentProps {
@@ -46,12 +49,13 @@ const NotasDetailContent: React.FC<NotasDetailContentProps> = ({
   loading,
   onBack,
 }) => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
+  const navigate = useNavigate();
   const [printing, setPrinting] = React.useState(false);
   const cliForLabel = nota.tipo === "credito" ? "Cliente" : "Fornecedor";
 
   const handlePrint = () => {
-    if (!token) {
+    if (!protheusAuth) {
       toast.error("Sessão expirada. Faça login novamente.");
       return;
     }
@@ -59,13 +63,18 @@ const NotasDetailContent: React.FC<NotasDetailContentProps> = ({
     const session = startNotaPrintSession();
     setPrinting(true);
 
-    void printNotaDebCre({ nota, accessToken: token, session })
+    void printNotaDebCre({ nota, basicAuth: protheusAuth, session })
       .catch((err) => {
         toast.error(err instanceof Error ? err.message : "Erro ao imprimir nota");
       })
       .finally(() => {
         setPrinting(false);
       });
+  };
+
+  const handleCopy = () => {
+    const state: NovaNotaLocationState = { copyFrom: nota };
+    navigate("/notas-debito-credito/nova", { state });
   };
 
   return (
@@ -418,6 +427,17 @@ const NotasDetailContent: React.FC<NotasDetailContentProps> = ({
             <Printer className="mr-2 h-4 w-4" />
           )}
           Imprimir
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full sm:w-auto"
+          disabled={loading || printing}
+          onClick={handleCopy}
+        >
+          <Copy className="mr-2 h-4 w-4" />
+          Copiar
         </Button>
 
         <Button

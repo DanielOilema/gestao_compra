@@ -36,6 +36,9 @@ verify_jwt = false
 [functions.protheus-inclui-sc]
 verify_jwt = false
 
+[functions.protheus-altera-sc]
+verify_jwt = false
+
 [functions.protheus-notas-debito-credito]
 verify_jwt = false
 

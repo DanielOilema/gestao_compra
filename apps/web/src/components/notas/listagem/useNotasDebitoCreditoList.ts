@@ -7,7 +7,7 @@ import { getDetNotaDebCre } from "@/hooks/getDetNotaDebCre";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useNotasDebitoCreditoList() {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState<NotasListFilters>(emptyNotasListFilters());
   const [appliedFilters, setAppliedFilters] = useState<NotasListFilters>(emptyNotasListFilters());
@@ -23,7 +23,7 @@ export function useNotasDebitoCreditoList() {
 
   const loadData = useCallback(
     async (filters: NotasListFilters, targetPage: number) => {
-      if (!token) return;
+      if (!protheusAuth) return;
 
       setIsLoading(true);
       try {
@@ -31,7 +31,7 @@ export function useNotasDebitoCreditoList() {
           filters,
           page: targetPage,
           pageSize: NOTAS_PAGE_SIZE,
-          accessToken: token,
+          basicAuth: protheusAuth,
         });
         setNotas(result.notas);
         setRows(result.rows);
@@ -49,13 +49,13 @@ export function useNotasDebitoCreditoList() {
         setIsLoading(false);
       }
     },
-    [token],
+    [protheusAuth],
   );
 
   useEffect(() => {
-    if (!token) return;
+    if (!protheusAuth) return;
     void loadData(emptyNotasListFilters(), 1);
-  }, [token, loadData]);
+  }, [protheusAuth, loadData]);
 
   const handlePesquisaChange = useCallback((value: string) => {
     setDraftFilters((prev) => ({ ...prev, pesquisa: value }));
@@ -67,7 +67,7 @@ export function useNotasDebitoCreditoList() {
 
   const openDetail = useCallback(
     async (nota: DebitCreditNote) => {
-      if (!token) return;
+      if (!protheusAuth) return;
       setDetailOpen(true);
       setDetailLoading(true);
       setDetailNota(nota);
@@ -76,7 +76,7 @@ export function useNotasDebitoCreditoList() {
           filial: nota.filial,
           tipo: nota.tipo,
           codigo: nota.numero,
-          accessToken: token,
+          basicAuth: protheusAuth,
           header: nota,
         });
         setDetailNota(full);
@@ -86,7 +86,7 @@ export function useNotasDebitoCreditoList() {
         setDetailLoading(false);
       }
     },
-    [token],
+    [protheusAuth],
   );
 
   const toggleFilters = useCallback(() => {

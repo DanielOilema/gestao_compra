@@ -5,18 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
 
 export const useIncluiNotaDC = () => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: IncluiNotaDCPayload): Promise<IncluiNotaDCResult> => {
-      if (!token) {
+      if (!protheusAuth) {
         throw new Error("Sessão inválida. Faça login novamente.");
       }
 
       return invokeProtheusFunction<IncluiNotaDCResult>(
         "protheus-inclui-nota-dc",
-        { ...payload, accessToken: token },
+        { ...payload, basicAuth: protheusAuth },
         "Falha ao incluir nota de débito/crédito",
       );
     },

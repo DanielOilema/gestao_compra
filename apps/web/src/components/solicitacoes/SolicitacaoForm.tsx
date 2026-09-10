@@ -9,13 +9,20 @@ import {
   Textarea,
 } from "@gestao-compra/ui";
 import {
+  canAlterSolicitacaoCompra,
+  formatNumeroSc,
+  getAlterarSolicitacaoMessage,
   getDefaultDataEntrega,
+  mapFormToAlteraSCPayload,
   mapFormToIncluiSCPayload,
+  mapPurchaseRequestToSolicitacaoDraft,
+  type PurchaseRequest,
   type SolicitacaoFormPayload,
   type SolicitacaoItemDraft,
   type TipoCompra,
 } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAlteraSolicitacao } from "@/hooks/useAlteraSolicitacao";
 import { useIncluiSolicitacao } from "@/hooks/useIncluiSolicitacao";
 import { brDateToIso, isoToBrDate } from "@/lib/dateBr";
 import BrDateInput from "@/components/shared/BrDateInput";
@@ -24,7 +31,7 @@ import TipoCompraSelect from "./inclusao/TipoCompraSelect";
 import ProdutoCombobox from "./inclusao/ProdutoCombobox";
 import CentroCustoCombobox from "./inclusao/CentroCustoCombobox";
 import SolicitacaoItensTable from "./inclusao/SolicitacaoItensTable";
-import { isSolicitacaoFormDirty } from "./inclusao/solicitacaoFormDirty";
+import { isSolicitacaoAlterFormDirty, isSolicitacaoFormDirty, type SolicitacaoDraftState } from "./inclusao/solicitacaoFormDirty";
 import { useSolicitacaoLeave } from "./inclusao/SolicitacaoLeaveContext";
 import FormField from "@/components/inclusao/FormField";
 import FormSection from "@/components/inclusao/FormSection";
@@ -62,26 +69,62 @@ const createItemId = () =>
     ? crypto.randomUUID()
     : `item-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-const SolicitacaoForm: React.FC = () => {
+export interface SolicitacaoFormProps {
+  mode?: "incluir" | "alterar";
+  initialRequest?: PurchaseRequest;
+}
+
+const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
+  mode = "incluir",
+  initialRequest,
+}) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { setIsDirty, confirmLeave } = useSolicitacaoLeave();
   const incluiMutation = useIncluiSolicitacao();
-  const [filial, setFilial] = React.useState("");
+  const alteraMutation = useAlteraSolicitacao();
+  const isAlter = mode === "alterar";
+  const initialDraft = React.useMemo(
+    () => (initialRequest ? mapPurchaseRequestToSolicitacaoDraft(initialRequest) : null),
+    [initialRequest],
+  );
+  const [filial, setFilial] = React.useState(initialDraft?.filial ?? "");
   const [filialError, setFilialError] = React.useState<string>();
-  const [tipoCompra, setTipoCompra] = React.useState<TipoCompra | "">("");
+  const [tipoCompra, setTipoCompra] = React.useState<TipoCompra | "">(initialDraft?.tipoCompra ?? "");
   const [tipoCompraError, setTipoCompraError] = React.useState<string>();
-  const [draft, setDraft] = React.useState<ItemDraftForm>(emptyDraft());
+  const [draft, setDraft] = React.useState<ItemDraftForm>(
+    emptyDraft(tipoCompra ? getDefaultDataEntrega(tipoCompra) : ""),
+  );
   const [draftErrors, setDraftErrors] = React.useState<Partial<Record<keyof ItemDraftForm, string>>>({});
-  const [itens, setItens] = React.useState<SolicitacaoItemDraft[]>([]);
+  const [itens, setItens] = React.useState<SolicitacaoItemDraft[]>(initialDraft?.itens ?? []);
   const [editingId, setEditingId] = React.useState<string | null>(null);
 
   const filialSelected = Boolean(filial);
-  const isSubmitting = incluiMutation.isPending;
+  const isSubmitting = incluiMutation.isPending || alteraMutation.isPending;
+  const defaultDataEntregaBr = tipoCompra ? isoToBrDate(getDefaultDataEntrega(tipoCompra)) : "";
+  const numeroScLabel = initialRequest ? formatNumeroSc(initialRequest.numero) : "";
 
   React.useEffect(() => {
-    setIsDirty(isSolicitacaoFormDirty(filial, tipoCompra, itens, draft));
-  }, [filial, tipoCompra, itens, draft, setIsDirty]);
+    const draftState: SolicitacaoDraftState = {
+      produto: draft.produto ?? "",
+      centroCusto: draft.centroCusto ?? "",
+      quantidade: draft.quantidade ?? 1,
+      observacao: draft.observacao,
+      dataEntrega: draft.dataEntrega,
+    };
+    if (isAlter && initialDraft) {
+      setIsDirty(
+        isSolicitacaoAlterFormDirty(
+          initialDraft,
+          { filial, tipoCompra, itens },
+          draftState,
+          defaultDataEntregaBr,
+        ),
+      );
+      return;
+    }
+    setIsDirty(isSolicitacaoFormDirty(filial, tipoCompra, itens, draftState));
+  }, [filial, tipoCompra, itens, draft, setIsDirty, isAlter, initialDraft, defaultDataEntregaBr]);
 
   React.useEffect(() => {
     if (!tipoCompra) return;
@@ -135,9 +178,18 @@ const SolicitacaoForm: React.FC = () => {
       return;
     }
 
+    const current = editingId ? itens.find((row) => row.id === editingId) : undefined;
+    const parsedItem = parsed.data;
     const item: SolicitacaoItemDraft = {
       id: editingId ?? createItemId(),
-      ...parsed.data,
+      item: current?.item,
+      produto: parsedItem.produto ?? "",
+      produtoDescricao: parsedItem.produtoDescricao ?? "",
+      unidade: parsedItem.unidade ?? "UN",
+      centroCusto: parsedItem.centroCusto ?? "",
+      centroCustoDescricao: parsedItem.centroCustoDescricao ?? "",
+      quantidade: parsedItem.quantidade ?? 1,
+      observacao: parsedItem.observacao,
       dataEntrega: dataEntregaIso,
     };
 
@@ -199,16 +251,38 @@ const SolicitacaoForm: React.FC = () => {
       return;
     }
 
+    if (itens.some((item) => !item.dataEntrega)) {
+      toast.error("Há itens sem data de entrega. Edite o item e informe a data.");
+      return;
+    }
+
     const formPayload: SolicitacaoFormPayload = {
       filial,
       tipoCompra,
       itens: itens.map(({ id: _id, ...item }) => item),
     };
 
-    const apiPayload = mapFormToIncluiSCPayload(formPayload, solicitante);
-
     try {
-      await incluiMutation.mutateAsync(apiPayload);
+      if (isAlter) {
+        if (!initialRequest) {
+          toast.error("Solicitação inválida para alteração.");
+          return;
+        }
+        const eligibility = canAlterSolicitacaoCompra(initialRequest, user);
+        if (!eligibility.ok) {
+          toast.error(getAlterarSolicitacaoMessage(eligibility));
+          return;
+        }
+        const apiPayload = mapFormToAlteraSCPayload(
+          formPayload,
+          solicitante,
+          initialRequest.numero,
+        );
+        await alteraMutation.mutateAsync(apiPayload);
+      } else {
+        const apiPayload = mapFormToIncluiSCPayload(formPayload, solicitante);
+        await incluiMutation.mutateAsync(apiPayload);
+      }
       setIsDirty(false);
       navigate("/solicitacoes-compra");
     } catch {
@@ -219,7 +293,9 @@ const SolicitacaoForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Dados da solicitação</h2>
+        <h2 className="text-lg font-semibold">
+          {isAlter ? `Alterar solicitação ${numeroScLabel}` : "Dados da solicitação"}
+        </h2>
         <FormGrid>
           <FilialSelect
             value={filial}
@@ -227,6 +303,7 @@ const SolicitacaoForm: React.FC = () => {
               setFilial(value);
               setFilialError(undefined);
             }}
+            disabled={isAlter}
             error={filialError}
           />
           <TipoCompraSelect
@@ -366,8 +443,10 @@ const SolicitacaoForm: React.FC = () => {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Incluindo...
+              {isAlter ? "Alterando..." : "Incluindo..."}
             </>
+          ) : isAlter ? (
+            "Alterar"
           ) : (
             "Incluir"
           )}

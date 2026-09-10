@@ -14,7 +14,7 @@ export interface GetNotasDebitoCreditoParams {
   filters: NotasListFilters;
   page: number;
   pageSize: number;
-  accessToken: string;
+  basicAuth: string;
 }
 
 export interface GetNotasDebitoCreditoResult {
@@ -28,7 +28,7 @@ export async function getNotasDebitoCredito({
   filters,
   page,
   pageSize,
-  accessToken,
+  basicAuth,
 }: GetNotasDebitoCreditoParams): Promise<GetNotasDebitoCreditoResult> {
   const dtInicial = toApiDate(filters.dataInicio);
   const dtFinal = toApiDate(filters.dataFim);
@@ -39,7 +39,7 @@ export async function getNotasDebitoCredito({
     {
       page,
       pageSize,
-      accessToken,
+      basicAuth,
       tipo:
         filters.tipo === "credito"
           ? "C"

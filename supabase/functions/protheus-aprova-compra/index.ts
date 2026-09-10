@@ -2,6 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { readProtheusText } from '../_shared/protheusResponse.ts';
 import { requirePermission, PermissionError } from '../_shared/checkPermission.ts';
+import { basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 // Extrai o primeiro objeto JSON válido de um texto que pode conter JSON
 // duplicado/concatenado (ex.: `{"success":"true"}{"success":"true"}`).
@@ -64,9 +65,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { filial, numero, tipo, user, acao, observacao, accessToken, ambiente } = await req.json();
+    const { filial, numero, tipo, user, acao, observacao, basicAuth, ambiente } = await req.json();
 
-    if (!filial || !numero || !tipo || !user || !acao || !accessToken) {
+    if (!filial || !numero || !tipo || !user || !acao || !isValidBasicAuth(basicAuth)) {
       return new Response(
         JSON.stringify({ success: false, error: 'Campos obrigatórios ausentes' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -88,7 +89,7 @@ Deno.serve(async (req) => {
     const response = await fetch(protheusUrl('/rest/AprovaCompra', ambiente), {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ filial, numero, tipo, user, acao, observacao: observacao ?? '' }),

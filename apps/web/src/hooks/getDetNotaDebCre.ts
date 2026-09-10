@@ -9,7 +9,7 @@ export async function getDetNotaDebCre(params: {
   filial: string;
   tipo: DebitCreditNote["tipo"];
   codigo: string;
-  accessToken: string;
+  basicAuth: string;
   header?: DebitCreditNote;
 }): Promise<DebitCreditNote> {
   const data = await invokeProtheusFunction<Record<string, unknown>>(
@@ -18,7 +18,7 @@ export async function getDetNotaDebCre(params: {
       filial: params.filial,
       tipo: getDetNotaDebCreTipoParam(params.tipo),
       codigo: params.codigo,
-      accessToken: params.accessToken,
+      basicAuth: params.basicAuth,
     },
     "Falha ao buscar detalhe da nota",
   );

@@ -29,6 +29,7 @@ const ListagemSolicitacoesPage: React.FC = () => {
     handlePreviousPage,
     handleSelectRow,
     handleVisualizar,
+    handleAlterar,
     handleCloseDetail,
   } = useSolicitacaoCompraList();
 
@@ -41,6 +42,7 @@ const ListagemSolicitacoesPage: React.FC = () => {
     <div className="animate-fade-in space-y-4">
       <SolicitacaoCompraToolbar
         onVisualizar={handleVisualizar}
+        onAlterar={handleAlterar}
         hasSelection={selectedRequest !== null}
         filtersOpen={filtersOpen}
         onToggleFilters={toggleFilters}
@@ -75,6 +77,7 @@ const ListagemSolicitacoesPage: React.FC = () => {
         onOpenChange={(open) => {
           if (!open) handleCloseDetail();
         }}
+        onAlterar={handleAlterar}
       />
     </div>
   );

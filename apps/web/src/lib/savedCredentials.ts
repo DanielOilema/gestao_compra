@@ -1,24 +1,11 @@
+import { fromBase64, toBase64 } from "./base64";
+
 export const SAVED_CREDENTIALS_KEY = "oilema:auth:savedCredentials";
 
 export type SavedCredentials = {
   username: string;
   password: string;
 };
-
-function toBase64(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-}
-
-function fromBase64(value: string): string {
-  const binary = atob(value);
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
 
 function parseStoredPayload(raw: string): SavedCredentials | null {
   const candidates = [raw];

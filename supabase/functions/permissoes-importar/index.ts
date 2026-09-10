@@ -8,6 +8,7 @@ import {
   PermissionError,
 } from '../_shared/permissionsDb.ts';
 import { getAdminUserId } from '../_shared/routineIds.ts';
+import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 function getUsersPath(): string {
   return Deno.env.get('PROTHEUS_USERS_PATH')?.trim() || '/rest/users';
@@ -51,11 +52,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userName, accessToken, ambiente } = await req.json();
+    const { userName, basicAuth, ambiente } = await req.json();
 
-    if (!userName?.trim() || !accessToken) {
+    if (!userName?.trim() || !isValidBasicAuth(basicAuth)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'userName e accessToken são obrigatórios' }),
+        JSON.stringify({ success: false, error: `userName e ${BASIC_AUTH_REQUIRED_MESSAGE}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
     const response = await fetch(protheusUrl(getUsersPath(), ambiente), {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
     });

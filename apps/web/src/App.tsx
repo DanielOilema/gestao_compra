@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 const Dashboard = lazy(() => import("@/pages/aprovacoes/Dashboard"));
 const SolicitacoesCompraLayout = lazy(() => import("@/pages/solicitacoes-compra/SolicitacoesCompraLayout"));
 const NovaSolicitacaoPage = lazy(() => import("@/pages/solicitacoes-compra/NovaSolicitacaoPage"));
+const AlterarSolicitacaoPage = lazy(() => import("@/pages/solicitacoes-compra/AlterarSolicitacaoPage"));
 const MinhasSolicitacoesPage = lazy(() => import("@/pages/solicitacoes-compra/MinhasSolicitacoesPage"));
 const NotasLayout = lazy(() => import("@/pages/notas/NotasLayout"));
 const NovaNotaPage = lazy(() => import("@/pages/notas/NovaNotaPage"));
@@ -70,6 +71,7 @@ const App = () => (
                       }
                     >
                       <Route path="nova" element={<NovaSolicitacaoPage />} />
+                      <Route path="alterar" element={<AlterarSolicitacaoPage />} />
                       <Route path="minhas" element={<MinhasSolicitacoesPage />} />
                     </Route>
 

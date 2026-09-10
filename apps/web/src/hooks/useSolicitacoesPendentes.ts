@@ -5,17 +5,17 @@ import { mapProtheusSCResponse } from '@gestao-compra/shared';
 import { invokeProtheusFunction } from '@/lib/invokeProtheusFunction';
 
 export const useSolicitacoesPendentes = () => {
-  const { user, token } = useAuth();
+  const { user, protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const aprovador = user?.nome ?? '';
 
   const query = useQuery({
     queryKey: ['solicitacoes-pendentes', ambiente, aprovador],
-    enabled: !!aprovador && !!token,
+    enabled: !!aprovador && !!protheusAuth,
     queryFn: async () => {
       const data = await invokeProtheusFunction(
         'protheus-sc-pendentes',
-        { aprovador, accessToken: token! },
+        { aprovador, basicAuth: protheusAuth! },
         'Falha ao buscar solicitações',
       );
       return mapProtheusSCResponse(data);

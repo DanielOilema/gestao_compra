@@ -5,7 +5,7 @@ import { buildNotaPrintHtml } from "./buildNotaPrintHtml";
 
 export interface PrintNotaDebCreParams {
   nota: DebitCreditNote;
-  accessToken: string;
+  basicAuth: string;
 }
 
 export interface NotaPrintSession {
@@ -99,7 +99,7 @@ export const startNotaPrintSession = (): NotaPrintSession => {
 
 export async function printNotaDebCre({
   nota,
-  accessToken,
+  basicAuth,
   session,
 }: PrintNotaDebCreParams & { session?: NotaPrintSession }): Promise<void> {
   const printSession = session ?? startNotaPrintSession();
@@ -109,7 +109,7 @@ export async function printNotaDebCre({
       filial: nota.filial,
       tipo: nota.tipo,
       codigo: nota.numero,
-      accessToken,
+      basicAuth,
       header: nota,
     });
 

@@ -12,20 +12,20 @@ export interface UseCentrosCustoParams {
 }
 
 export const useCentrosCusto = ({ search, enabled = true }: UseCentrosCustoParams) => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const trimmed = search.trim();
 
   return useQuery({
     queryKey: ["centros-custo", ambiente, trimmed],
-    enabled: !!token && enabled && trimmed.length >= 2,
+    enabled: !!protheusAuth && enabled && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(
         "protheus-ccusto",
         {
           page: 1,
           pageSize: CCUSTO_PAGE_SIZE,
-          accessToken: token!,
+          basicAuth: protheusAuth!,
           filtro: trimmed,
         },
         "Falha ao buscar centros de custo",

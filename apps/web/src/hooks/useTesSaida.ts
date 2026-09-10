@@ -13,14 +13,14 @@ export interface UseTesSaidaParams {
 }
 
 export const useTesSaida = ({ filial, search, enabled = true }: UseTesSaidaParams) => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const trimmed = search.trim();
   const filialTrimmed = filial.trim();
 
   return useQuery({
     queryKey: ["tes-saida", ambiente, filialTrimmed, trimmed],
-    enabled: !!token && enabled && !!filialTrimmed && trimmed.length >= 2,
+    enabled: !!protheusAuth && enabled && !!filialTrimmed && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(
         "protheus-tes-saida",
@@ -28,7 +28,7 @@ export const useTesSaida = ({ filial, search, enabled = true }: UseTesSaidaParam
           page: 1,
           pageSize: TES_PAGE_SIZE,
           filial: filialTrimmed,
-          accessToken: token!,
+          basicAuth: protheusAuth!,
           filtro: trimmed,
         },
         "Falha ao buscar TES",

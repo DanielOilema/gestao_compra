@@ -16,10 +16,12 @@ import {
   readStoredProtheusAmbiente,
   writeStoredProtheusAmbiente,
 } from '@/lib/protheusAmbienteStorage';
+import { buildBasicCredential } from '@/lib/protheusBasicAuth';
+import { readSavedCredentials } from '@/lib/savedCredentials';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
+  protheusAuth: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
@@ -37,7 +39,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'oilema:auth:user';
-const TOKEN_STORAGE_KEY = 'oilema:auth:token';
+// Chave do antigo access_token: mantida apenas para limpar resíduo de versões anteriores.
+const LEGACY_TOKEN_STORAGE_KEY = 'oilema:auth:token';
 const LOGIN_AT_KEY = 'oilema:auth:loginAt';
 
 async function fetchUserPermissions(
@@ -79,22 +82,66 @@ function buildUserProfile(
   };
 }
 
+function clearPersistedSession(): void {
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(LOGIN_AT_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function readStoredUser(): User | null {
+  try {
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as User) : null;
+  } catch {
+    return null;
+  }
+}
+
+interface RestoredSession {
+  user: User | null;
+  protheusAuth: string | null;
+}
+
+// A credencial Basic só vive em memória. Ao recarregar a página ela é reconstruída
+// a partir das credenciais salvas ("Salvar senha"); sem elas, a sessão não continua.
+function restoreSession(): RestoredSession {
+  const saved = readSavedCredentials();
+  if (!saved) {
+    clearPersistedSession();
+    return { user: null, protheusAuth: null };
+  }
+
+  try {
+    localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+  } catch {
+    // ignore storage failures
+  }
+
+  const userName = normalizeProtheusLoginUserName(saved.username);
+  return {
+    user: readStoredUser(),
+    protheusAuth: buildBasicCredential(userName, saved.password),
+  };
+}
+
+let restoredSession: RestoredSession | null = null;
+
+function getRestoredSession(): RestoredSession {
+  if (!restoredSession) {
+    restoredSession = restoreSession();
+  }
+  return restoredSession;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      return stored ? (JSON.parse(stored) as User) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [token, setToken] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(TOKEN_STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(() => getRestoredSession().user);
+  const [protheusAuth, setProtheusAuth] = useState<string | null>(
+    () => getRestoredSession().protheusAuth,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const permissionsRefreshedRef = useRef(false);
 
@@ -146,9 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
         }
 
-        if (data?.success && data?.access_token) {
-          const accessToken = data.access_token as string;
-
+        if (data?.success) {
           let permissionsData: UserPermissionsResponse;
           try {
             permissionsData = await fetchUserPermissions(loginUserName);
@@ -164,11 +209,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           const profile = buildUserProfile(loginUserName, permissionsData);
 
+          const credential = buildBasicCredential(loginUserName, password);
+
           permissionsRefreshedRef.current = true;
-          setToken(accessToken);
+          setProtheusAuth(credential);
           setUser(profile);
+          restoredSession = { user: profile, protheusAuth: credential };
           try {
-            localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+            localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
             localStorage.setItem(LOGIN_AT_KEY, String(Date.now()));
           } catch {
@@ -195,15 +243,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(() => {
     setUser(null);
-    setToken(null);
+    setProtheusAuth(null);
     permissionsRefreshedRef.current = false;
-    try {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem(LOGIN_AT_KEY);
-    } catch {
-      // ignore storage failures
-    }
+    restoredSession = { user: null, protheusAuth: null };
+    clearPersistedSession();
   }, []);
 
   const expireSession = useCallback(
@@ -220,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [expireSession]);
 
   useEffect(() => {
-    if (!token || !user?.userName || permissionsRefreshedRef.current) return;
+    if (!protheusAuth || !user?.userName || permissionsRefreshedRef.current) return;
 
     let cancelled = false;
 
@@ -249,14 +292,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       cancelled = true;
     };
-  }, [token, user?.userName, user?.permissions]);
+  }, [protheusAuth, user?.userName, user?.permissions]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
-        isAuthenticated: !!user && !!token,
+        protheusAuth,
+        isAuthenticated: !!user && !!protheusAuth,
         isLoading,
         isAdmin,
         permissions,

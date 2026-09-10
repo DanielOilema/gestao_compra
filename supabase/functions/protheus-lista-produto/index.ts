@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -8,11 +9,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { page, pageSize, filtro, accessToken, ambiente } = await req.json();
+    const { page, pageSize, filtro, basicAuth, ambiente } = await req.json();
 
-    if (page == null || pageSize == null || !accessToken) {
+    if (page == null || pageSize == null || !isValidBasicAuth(basicAuth)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'page, pageSize e accessToken são obrigatórios' }),
+        JSON.stringify({ success: false, error: `page, pageSize e ${BASIC_AUTH_REQUIRED_MESSAGE}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
     });

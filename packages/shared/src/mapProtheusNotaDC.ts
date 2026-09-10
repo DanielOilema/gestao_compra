@@ -384,10 +384,11 @@ export const mapProtheusDetNotaDebCreResponse = (
     responsavel: readField(det, "usuario", "user", "responsavel") || header?.responsavel || "",
     referenteA:
       readField(det, "referenteA", "referente", "referentea") || header?.referenteA || "",
-    natureza: header?.natureza,
-    naturezaDescricao: header?.naturezaDescricao,
-    tes: header?.tes,
-    tesDescricao: header?.tesDescricao,
+    natureza: readField(det, "natureza", "codnatureza") || header?.natureza,
+    naturezaDescricao:
+      readField(det, "descnatureza", "naturezadescricao") || header?.naturezaDescricao,
+    tes: readField(det, "tes", "codtes") || header?.tes,
+    tesDescricao: readField(det, "desctes", "tesdescricao") || header?.tesDescricao,
     formaPagamento,
     banco: readField(det, "banco") || header?.banco,
     agencia: readField(det, "agencia") || header?.agencia,

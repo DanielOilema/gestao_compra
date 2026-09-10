@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -8,13 +9,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { filial, tipo, codigo, accessToken, ambiente } = await req.json();
+    const { filial, tipo, codigo, basicAuth, ambiente } = await req.json();
 
-    if (!filial?.trim() || !tipo?.trim() || !codigo?.trim() || !accessToken) {
+    if (!filial?.trim() || !tipo?.trim() || !codigo?.trim() || !isValidBasicAuth(basicAuth)) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'filial, tipo, codigo e accessToken são obrigatórios',
+          error: `filial, tipo, codigo e ${BASIC_AUTH_REQUIRED_MESSAGE}`,
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
     });

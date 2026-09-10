@@ -12,20 +12,20 @@ export interface UseNaturezasParams {
 }
 
 export const useNaturezas = ({ search, enabled = true }: UseNaturezasParams) => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const trimmed = search.trim();
 
   return useQuery({
     queryKey: ["naturezas", ambiente, trimmed],
-    enabled: !!token && enabled && trimmed.length >= 2,
+    enabled: !!protheusAuth && enabled && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(
         "protheus-natureza",
         {
           page: 1,
           pageSize: NATUREZA_PAGE_SIZE,
-          accessToken: token!,
+          basicAuth: protheusAuth!,
           filtro: trimmed,
         },
         "Falha ao buscar naturezas",

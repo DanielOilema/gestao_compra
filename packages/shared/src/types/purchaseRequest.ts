@@ -1,4 +1,5 @@
 import type { SolicitacaoCompraProtheusStatus } from "../solicitacaoCompraStatus";
+import type { TipoCompra } from "../tipoCompra";
 
 export type PurchaseRequestStatus =
   | "rascunho"
@@ -19,6 +20,7 @@ export interface PurchaseRequestItem {
   observacao?: string;
   codigoCentroCusto?: string;
   descricaoCentroCusto?: string;
+  dataEntrega?: string;
   status?: SolicitacaoCompraProtheusStatus;
 }
 
@@ -45,6 +47,7 @@ export interface PurchaseRequest {
   status: SolicitacaoCompraProtheusStatus | PurchaseRequestStatus;
   solicitante: string;
   filial: string;
+  tipoCompra?: TipoCompra;
   itens: PurchaseRequestItem[];
 }
 

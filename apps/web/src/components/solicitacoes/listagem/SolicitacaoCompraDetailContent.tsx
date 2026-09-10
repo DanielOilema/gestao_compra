@@ -1,6 +1,6 @@
 import React from "react";
 import type { PurchaseRequest, PurchaseRequestItem } from "@gestao-compra/shared";
-import { formatNumeroSc, getFilialState } from "@gestao-compra/shared";
+import { canAlterSolicitacaoCompra, formatNumeroSc, getFilialState } from "@gestao-compra/shared";
 import {
   Card,
   CardContent,
@@ -14,12 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@gestao-compra/ui";
-import { ArrowLeft, FileText, Calendar, Package, User } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, Package, User, Pencil } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SolicitacaoCompraDetailContentProps {
   request: PurchaseRequest;
   onBack: () => void;
+  onAlterar?: () => void;
 }
 
 const formatDate = (date: string) =>
@@ -41,8 +43,11 @@ const formatItemObservacao = (item: PurchaseRequestItem): string => {
 const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentProps> = ({
   request,
   onBack,
+  onAlterar,
 }) => {
+  const { user } = useAuth();
   const title = `${formatNumeroSc(request.numero)} (${getFilialState(request.filial)})`;
+  const canAlter = onAlterar && canAlterSolicitacaoCompra(request, user).ok;
 
   return (
     <div className="animate-fade-in space-y-4 sm:space-y-6">
@@ -60,6 +65,12 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">Solicitação de Compra</p>
         </div>
+        {canAlter ? (
+          <Button size="sm" variant="outline" onClick={onAlterar} className="shrink-0">
+            <Pencil className="mr-2 h-4 w-4" />
+            Alterar
+          </Button>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

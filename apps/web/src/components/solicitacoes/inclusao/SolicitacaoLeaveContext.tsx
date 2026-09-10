@@ -54,10 +54,9 @@ export const SolicitacaoLeaveProvider: React.FC<{ children: React.ReactNode }> =
       <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Descartar solicitação?</AlertDialogTitle>
+            <AlertDialogTitle>Sair sem salvar?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você já começou a preencher esta solicitação. Se sair agora, os dados informados serão
-              perdidos.
+              Se sair agora, as informações preenchidas serão perdidas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

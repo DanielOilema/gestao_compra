@@ -27,4 +27,5 @@ export * from './setorNotaDC';
 export * from './notaPrint';
 export * from './dataEntregaTipoCompra';
 export * from './mapIncluiSCPayload';
+export * from './canAlterSolicitacaoCompra';
 export * from './protheusResult';

@@ -2,6 +2,7 @@ import type { TipoCompra } from "../tipoCompra";
 
 export interface SolicitacaoItemDraft {
   id: string;
+  item?: string;
   produto: string;
   produtoDescricao: string;
   unidade: string;
@@ -34,6 +35,23 @@ export interface IncluiSCPayload {
 }
 
 export interface IncluiSCResult {
+  mensagem: string;
+  numeroSC?: string;
+}
+
+export interface AlteraSCItemPayload extends IncluiSCItemPayload {
+  item?: string;
+}
+
+export interface AlteraSCPayload {
+  filial: string;
+  numeroSC: string;
+  solicitante: string;
+  tipoCompra: TipoCompra;
+  itens: AlteraSCItemPayload[];
+}
+
+export interface AlteraSCResult {
   mensagem: string;
   numeroSC?: string;
 }

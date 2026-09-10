@@ -11,14 +11,14 @@ type Acao = 'liberar' | 'bloquear';
 export type AprovaCompraDocumento = 'pedido' | 'solicitacao';
 
 export const useAprovaCompra = (order: Order, documento: AprovaCompraDocumento = 'pedido') => {
-  const { user, token, expireSession } = useAuth();
+  const { user, protheusAuth, expireSession } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
   const executar = useCallback(
     async (acao: Acao, observacao = ''): Promise<boolean> => {
-      if (!user || !token) {
+      if (!user || !protheusAuth) {
         const msg = 'Sessão inválida. Faça login novamente.';
         expireSession(msg);
         setError(msg);
@@ -36,7 +36,7 @@ export const useAprovaCompra = (order: Order, documento: AprovaCompraDocumento =
             user: user.nome,
             acao,
             observacao,
-            accessToken: token,
+            basicAuth: protheusAuth,
           },
           'Falha ao processar ação no Protheus',
         );
@@ -78,7 +78,7 @@ export const useAprovaCompra = (order: Order, documento: AprovaCompraDocumento =
         setIsLoading(false);
       }
     },
-    [order.filial, order.numero, documento, user, token, queryClient, expireSession],
+    [order.filial, order.numero, documento, user, protheusAuth, queryClient, expireSession],
   );
 
   return {

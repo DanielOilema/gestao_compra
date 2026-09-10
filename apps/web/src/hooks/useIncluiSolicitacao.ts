@@ -5,18 +5,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
 
 export const useIncluiSolicitacao = () => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: IncluiSCPayload): Promise<IncluiSCResult> => {
-      if (!token) {
+      if (!protheusAuth) {
         throw new Error("Sessão inválida. Faça login novamente.");
       }
 
       return invokeProtheusFunction<IncluiSCResult>(
         "protheus-inclui-sc",
-        { ...payload, accessToken: token },
+        { ...payload, basicAuth: protheusAuth },
         "Falha ao incluir solicitação de compra",
       );
     },

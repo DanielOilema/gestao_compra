@@ -1,6 +1,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
 function getUsersPath(): string {
   return Deno.env.get('PROTHEUS_USERS_PATH')?.trim() || '/rest/users';
@@ -12,11 +13,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { accessToken, ambiente } = await req.json();
+    const { basicAuth, ambiente } = await req.json();
 
-    if (!accessToken) {
+    if (!isValidBasicAuth(basicAuth)) {
       return new Response(
-        JSON.stringify({ success: false, error: 'accessToken é obrigatório' }),
+        JSON.stringify({ success: false, error: BASIC_AUTH_REQUIRED_MESSAGE }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
     const response = await fetch(protheusUrl(getUsersPath(), ambiente), {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: basicAuthHeader(basicAuth),
         'Content-Type': 'application/json',
       },
     });

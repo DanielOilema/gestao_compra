@@ -13,13 +13,13 @@ export interface UseListaCliForParams {
 }
 
 export const useListaCliFor = ({ tipo, search, enabled = true }: UseListaCliForParams) => {
-  const { token } = useAuth();
+  const { protheusAuth } = useAuth();
   const { ambiente } = useEnvironment();
   const trimmed = search.trim();
 
   return useQuery({
     queryKey: ["lista-cli-for", ambiente, tipo, trimmed],
-    enabled: !!token && enabled && trimmed.length >= 2,
+    enabled: !!protheusAuth && enabled && trimmed.length >= 2,
     queryFn: async () => {
       const data = await invokeProtheusFunction<Record<string, unknown>>(
         "protheus-lista-cli-for",
@@ -27,7 +27,7 @@ export const useListaCliFor = ({ tipo, search, enabled = true }: UseListaCliForP
           page: 1,
           pageSize: CLI_FOR_PAGE_SIZE,
           tipo,
-          accessToken: token!,
+          basicAuth: protheusAuth!,
           filtro: trimmed,
         },
         "Falha ao buscar clientes/fornecedores",

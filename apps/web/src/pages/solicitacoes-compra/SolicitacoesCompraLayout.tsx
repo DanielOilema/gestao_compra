@@ -27,17 +27,17 @@ const SolicitacoesCompraLayout: React.FC = () => {
   const location = useLocation();
   const pathname = location.pathname;
 
-  const isNova = pathname.endsWith("/nova");
+  const isFormPage = pathname.endsWith("/nova") || pathname.endsWith("/alterar");
   const isIndex =
     pathname === "/solicitacoes-compra" || pathname.endsWith("/minhas");
 
-  if (!isIndex && !isNova) {
+  if (!isIndex && !isFormPage) {
     return <Navigate to="/solicitacoes-compra" replace />;
   }
 
   return (
     <AppLayout>
-      {isNova ? (
+      {isFormPage ? (
         <SolicitacaoLeaveProvider>
           <NovaSolicitacaoLayout />
         </SolicitacaoLeaveProvider>

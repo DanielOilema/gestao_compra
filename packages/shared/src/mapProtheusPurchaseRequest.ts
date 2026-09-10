@@ -1,5 +1,6 @@
 import type { PurchaseRequest, PurchaseRequestItem } from './types/purchaseRequest';
 import { mapProtheusSolicitacaoCompraStatus } from './solicitacaoCompraStatus';
+import { mapProtheusTipoCompra, type TipoCompra } from './tipoCompra';
 
 export interface ProtheusListaSCLine {
   filial?: string;
@@ -19,6 +20,13 @@ export interface ProtheusListaSCLine {
   unid?: string;
   status?: string;
   situacao?: string;
+  tipoCompra?: string;
+  tipo?: string;
+  tpcompra?: string;
+  entrega?: string;
+  dataEntrega?: string;
+  datprf?: string;
+  dtentrega?: string;
 }
 
 const t = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -80,6 +88,49 @@ const readLineStatusRaw = (line: ProtheusListaSCLine): string | undefined => {
 const resolveLineStatus = (line: ProtheusListaSCLine) =>
   mapProtheusSolicitacaoCompraStatus(readLineStatusRaw(line));
 
+const readLineTipoCompra = (line: ProtheusListaSCLine): TipoCompra | undefined => {
+  const record = line as Record<string, unknown>;
+  const candidates = [line.tipoCompra, line.tpcompra];
+
+  for (const [key, value] of Object.entries(record)) {
+    const normalizedKey = key.toLowerCase();
+    if (normalizedKey === "tipocompra" || normalizedKey === "tpcompra") {
+      candidates.push(value == null ? undefined : String(value));
+    }
+  }
+
+  for (const candidate of candidates) {
+    const mapped = mapProtheusTipoCompra(candidate);
+    if (mapped) return mapped;
+  }
+
+  return undefined;
+};
+
+const readLineDataEntrega = (line: ProtheusListaSCLine): string | undefined => {
+  const direct =
+    t(line.entrega) || t(line.dataEntrega) || t(line.datprf) || t(line.dtentrega);
+  if (direct) return parseDate(direct);
+
+  const record = line as Record<string, unknown>;
+  for (const [key, value] of Object.entries(record)) {
+    const normalizedKey = key.toLowerCase();
+    if (
+      normalizedKey !== "entrega" &&
+      normalizedKey !== "dataentrega" &&
+      normalizedKey !== "datprf" &&
+      normalizedKey !== "dtentrega"
+    ) {
+      continue;
+    }
+    if (value == null) continue;
+    const text = String(value).trim();
+    if (text) return parseDate(text);
+  }
+
+  return undefined;
+};
+
 const readCentroCusto = (line: ProtheusListaSCLine): { codigo: string; descricao: string } => {
   const codigo = t(line.cc);
   const descricao = t(line.desccc);
@@ -117,6 +168,7 @@ const mapLineToItem = (line: ProtheusListaSCLine, filial: string, numero: string
     observacao: t(line.obs) || t(line.observacao) || undefined,
     codigoCentroCusto: centroCusto.codigo || undefined,
     descricaoCentroCusto: centroCusto.descricao || undefined,
+    dataEntrega: readLineDataEntrega(line),
     status: resolveLineStatus(line),
   };
 };
@@ -132,6 +184,7 @@ export const mapProtheusPurchaseRequest = (line: ProtheusListaSCLine): PurchaseR
     dataCriacao: parseDate(line.emissao),
     status: resolveLineStatus(line),
     solicitante: t(line.solicitante),
+    tipoCompra: readLineTipoCompra(line),
     itens: [mapLineToItem(line, filial, numero)],
   };
 };
@@ -158,10 +211,12 @@ export const mapProtheusListaSolicitacoesResponse = (
     const key = `${filial}|${numero}`;
     const item = mapLineToItem(line, filial, numero);
     const existing = byKey.get(key);
+    const tipoCompra = readLineTipoCompra(line);
 
     if (existing) {
       existing.itens.push(item);
       existing.status = resolveLineStatus(line);
+      if (!existing.tipoCompra && tipoCompra) existing.tipoCompra = tipoCompra;
       continue;
     }
 
@@ -172,6 +227,7 @@ export const mapProtheusListaSolicitacoesResponse = (
       dataCriacao: parseDate(line.emissao),
       status: resolveLineStatus(line),
       solicitante: t(line.solicitante),
+      tipoCompra,
       itens: [item],
     });
   }

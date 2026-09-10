@@ -55,9 +55,11 @@ Deno.serve(async (req) => {
       // ignore
     }
 
+    // O token não é mais usado pelo app (as demais chamadas usam Basic auth);
+    // esta requisição serve apenas para validar usuário e senha no Protheus.
     if (data?.access_token) {
       return new Response(
-        JSON.stringify({ success: true, access_token: data.access_token, raw: data }),
+        JSON.stringify({ success: true }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
