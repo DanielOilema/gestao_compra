@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
-import InactivityGuard from "@/components/InactivityGuard";
 import ProtectedRoute, { PermissionRoute } from "@/components/layout/ProtectedRoute";
 import AuthSessionRedirect from "@/components/layout/AuthSessionRedirect";
 import ErrorBoundary from "@/components/layout/ErrorBoundary";
@@ -39,7 +38,6 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <PwaInstallGate />
-        <InactivityGuard />
         <Toaster />
         <Sonner />
         <BrowserRouter>

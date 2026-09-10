@@ -39,9 +39,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'oilema:auth:user';
-// Chave do antigo access_token: mantida apenas para limpar resíduo de versões anteriores.
+// Chaves legadas: mantidas apenas para limpar resíduo de versões anteriores.
 const LEGACY_TOKEN_STORAGE_KEY = 'oilema:auth:token';
-const LOGIN_AT_KEY = 'oilema:auth:loginAt';
+const LEGACY_LOGIN_AT_KEY = 'oilema:auth:loginAt';
 
 async function fetchUserPermissions(
   userName: string,
@@ -85,8 +85,8 @@ function buildUserProfile(
 function clearPersistedSession(): void {
   try {
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(LOGIN_AT_KEY);
     localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_LOGIN_AT_KEY);
   } catch {
     // ignore storage failures
   }
@@ -217,8 +217,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           restoredSession = { user: profile, protheusAuth: credential };
           try {
             localStorage.removeItem(LEGACY_TOKEN_STORAGE_KEY);
+            localStorage.removeItem(LEGACY_LOGIN_AT_KEY);
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile));
-            localStorage.setItem(LOGIN_AT_KEY, String(Date.now()));
           } catch {
             // ignore storage failures
           }
