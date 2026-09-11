@@ -2,6 +2,7 @@ export const ROUTINE_PERMISSION_IDS = [
   'aprovacoes',
   'solicitacoes-compra',
   'notas-debito-credito',
+  'transportadoras',
   'relatorios-financeiro',
   'relatorios-compras',
   'gestao-permissoes',
@@ -41,8 +42,9 @@ export const ROUTINE_LABELS: Record<RoutinePermissionId, string> = {
   aprovacoes: 'Aprovação de Compra',
   'solicitacoes-compra': 'Solicitação de Compra',
   'notas-debito-credito': 'Nota de Débito/Crédito',
+  transportadoras: 'Transportadoras',
   'relatorios-financeiro': 'Relatórios do Financeiro',
-  'relatorios-compras': 'Relatórios de Compras',
+  'relatorios-compras': 'Solicitações de Compras',
   'gestao-permissoes': 'Administrador',
 };
 
@@ -51,6 +53,7 @@ export const ASSIGNABLE_PERMISSION_IDS: RoutinePermissionId[] = [
   'aprovacoes',
   'solicitacoes-compra',
   'notas-debito-credito',
+  'transportadoras',
   'relatorios-financeiro',
   'relatorios-compras',
   'gestao-permissoes',

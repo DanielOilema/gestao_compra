@@ -54,6 +54,24 @@ verify_jwt = false
 [functions.protheus-users]
 verify_jwt = false
 
+[functions.protheus-grupos-solicitacoes]
+verify_jwt = false
+
+[functions.protheus-rel-sc-setores]
+verify_jwt = false
+
+[functions.protheus-lista-transportadoras]
+verify_jwt = false
+
+[functions.protheus-det-transportadora]
+verify_jwt = false
+
+[functions.protheus-inclui-transportadora]
+verify_jwt = false
+
+[functions.protheus-busca-municipio]
+verify_jwt = false
+
 [functions.permissoes-por-usuario]
 verify_jwt = false
 

@@ -5,9 +5,11 @@ import {
   ALTERAR_SOLICITACAO_STATUS_MESSAGE,
   canAlterSolicitacaoCompra,
   getAlterarSolicitacaoMessage,
+  isSolicitacaoCompraAlteravelPorStatus,
   isSolicitacaoCompraStatusAlteravel,
   isSolicitanteDaSolicitacao,
   mapFormToAlteraSCPayload,
+  mapFormToIncluiSCPayload,
   mapProtheusListaSolicitacoesResponse,
   mapProtheusTipoCompra,
   mapPurchaseRequestToSolicitacaoDraft,
@@ -54,6 +56,31 @@ describe("isSolicitacaoCompraStatusAlteravel", () => {
     expect(isSolicitacaoCompraStatusAlteravel("totalmente_atendida")).toBe(false);
     expect(isSolicitacaoCompraStatusAlteravel("rejeitada")).toBe(false);
     expect(isSolicitacaoCompraStatusAlteravel("pendente")).toBe(false);
+  });
+});
+
+describe("isSolicitacaoCompraAlteravelPorStatus", () => {
+  it("allows open and blocked requests", () => {
+    expect(isSolicitacaoCompraAlteravelPorStatus(baseRequest())).toBe(true);
+    expect(
+      isSolicitacaoCompraAlteravelPorStatus(
+        baseRequest({
+          status: "bloqueada",
+          itens: [{ ...baseRequest().itens[0], status: "bloqueada" }],
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects requests with another status", () => {
+    expect(
+      isSolicitacaoCompraAlteravelPorStatus(
+        baseRequest({
+          status: "em_cotacao",
+          itens: [{ ...baseRequest().itens[0], status: "em_cotacao" }],
+        }),
+      ),
+    ).toBe(false);
   });
 });
 
@@ -150,7 +177,7 @@ describe("mapPurchaseRequestToSolicitacaoDraft", () => {
 });
 
 describe("mapFormToAlteraSCPayload", () => {
-  it("sends numeroSC and original item codes", () => {
+  it("sends acao 4, numeroSC and original item codes", () => {
     const payload = mapFormToAlteraSCPayload(
       {
         filial: "0101",
@@ -177,6 +204,7 @@ describe("mapFormToAlteraSCPayload", () => {
       numeroSC: "000123",
       solicitante: "Daniel Silveira",
       tipoCompra: "2",
+      acao: 4,
       itens: [
         {
           item: "0001",
@@ -188,6 +216,32 @@ describe("mapFormToAlteraSCPayload", () => {
         },
       ],
     });
+  });
+
+  it("maps an alter through the include payload with acao 4", () => {
+    const payload = mapFormToIncluiSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "1",
+        itens: [
+          {
+            produto: "8001000013",
+            produtoDescricao: "BIG BAG",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 10,
+            dataEntrega: "2026-08-10",
+            item: "0001",
+          },
+        ],
+      },
+      "Daniel Silveira",
+      { acao: 4, numeroSC: "000123" },
+    );
+
+    expect(payload.acao).toBe(4);
+    expect(payload.numeroSC).toBe("000123");
   });
 });
 

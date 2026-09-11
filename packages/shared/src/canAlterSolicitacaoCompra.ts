@@ -51,18 +51,24 @@ const resolveItemStatus = (
   return String(requestStatus ?? "");
 };
 
-export const canAlterSolicitacaoCompra = (
+export const isSolicitacaoCompraAlteravelPorStatus = (
   request: PurchaseRequest | null | undefined,
-  user?: { nome?: string; userName?: string } | null,
-): CanAlterSolicitacaoResult => {
-  if (!request) return { ok: false, reason: "status" };
+): boolean => {
+  if (!request) return false;
 
   const statuses =
     request.itens.length > 0
       ? request.itens.map((item) => resolveItemStatus(item, request.status))
       : [String(request.status ?? "")];
 
-  if (!statuses.every(isSolicitacaoCompraStatusAlteravel)) {
+  return statuses.every(isSolicitacaoCompraStatusAlteravel);
+};
+
+export const canAlterSolicitacaoCompra = (
+  request: PurchaseRequest | null | undefined,
+  user?: { nome?: string; userName?: string } | null,
+): CanAlterSolicitacaoResult => {
+  if (!request || !isSolicitacaoCompraAlteravelPorStatus(request)) {
     return { ok: false, reason: "status" };
   }
 

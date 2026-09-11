@@ -4,9 +4,9 @@ import { toast } from "sonner";
 import type { PurchaseRequest, SolicitacaoCompraRow } from "@gestao-compra/shared";
 import {
   ALTERAR_SOLICITACAO_SELECIONE_MESSAGE,
-  canAlterSolicitacaoCompra,
+  ALTERAR_SOLICITACAO_STATUS_MESSAGE,
   flattenPurchaseRequests,
-  getAlterarSolicitacaoMessage,
+  isSolicitacaoCompraAlteravelPorStatus,
 } from "@gestao-compra/shared";
 import {
   emptySolicitacaoCompraListFilters,
@@ -19,7 +19,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useSolicitacaoCompraList() {
-  const { protheusAuth, user } = useAuth();
+  const { protheusAuth } = useAuth();
   const navigate = useNavigate();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState<SolicitacaoCompraListFilters>(
@@ -123,16 +123,15 @@ export function useSolicitacaoCompraList() {
       return false;
     }
 
-    const eligibility = canAlterSolicitacaoCompra(selectedRequest, user);
-    if (!eligibility.ok) {
-      toast.warning(getAlterarSolicitacaoMessage(eligibility));
+    if (!isSolicitacaoCompraAlteravelPorStatus(selectedRequest)) {
+      toast.warning(ALTERAR_SOLICITACAO_STATUS_MESSAGE);
       return false;
     }
 
     setDetailOpen(false);
-    navigate("/solicitacoes-compra/alterar", { state: { request: selectedRequest } });
+    navigate("/solicitacoes-compra/nova", { state: { alterFrom: selectedRequest } });
     return true;
-  }, [navigate, selectedRequest, user]);
+  }, [navigate, selectedRequest]);
 
   const handleCloseDetail = useCallback(() => {
     setDetailOpen(false);

@@ -1,0 +1,37 @@
+import type {
+  PurchaseRequest,
+  SolicitacaoItemDraft,
+  TipoCompra,
+} from "@gestao-compra/shared";
+
+export interface NovaSolicitacaoLocationState {
+  copyFrom?: PurchaseRequest;
+  alterFrom?: PurchaseRequest;
+}
+
+export interface SolicitacaoInclusaoDraft {
+  filial: string;
+  tipoCompra: TipoCompra | "";
+  itens: SolicitacaoItemDraft[];
+}
+
+const newDraftItemId = (): string =>
+  globalThis.crypto?.randomUUID?.() ?? `item-${Math.random().toString(36).slice(2)}`;
+
+export const mapPurchaseRequestToInclusaoDraft = (
+  request: PurchaseRequest,
+): SolicitacaoInclusaoDraft => ({
+  filial: request.filial,
+  tipoCompra: request.tipoCompra ?? "",
+  itens: request.itens.map((item) => ({
+    id: newDraftItemId(),
+    produto: item.produto,
+    produtoDescricao: item.descricao,
+    unidade: item.unidade || "UN",
+    centroCusto: item.codigoCentroCusto ?? "",
+    centroCustoDescricao: item.descricaoCentroCusto ?? "",
+    quantidade: item.quantidade,
+    observacao: item.observacao ?? "",
+    dataEntrega: item.dataEntrega || request.dataCriacao || "",
+  })),
+});

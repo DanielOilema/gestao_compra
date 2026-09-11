@@ -2,11 +2,10 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import {
-  canAlterSolicitacaoCompra,
-  getAlterarSolicitacaoMessage,
+  ALTERAR_SOLICITACAO_STATUS_MESSAGE,
+  isSolicitacaoCompraAlteravelPorStatus,
   type PurchaseRequest,
 } from "@gestao-compra/shared";
-import { useAuth } from "@/contexts/AuthContext";
 import SolicitacaoForm from "@/components/solicitacoes/SolicitacaoForm";
 
 export interface AlterarSolicitacaoLocationState {
@@ -15,25 +14,18 @@ export interface AlterarSolicitacaoLocationState {
 
 const AlterarSolicitacaoPage: React.FC = () => {
   const location = useLocation();
-  const { user } = useAuth();
   const request = (location.state as AlterarSolicitacaoLocationState | null)?.request;
-  const eligibility = canAlterSolicitacaoCompra(request, user);
-  const blocked = !request || !eligibility.ok;
-  let blockedReason: "missing" | "status" | "solicitante" | null = null;
-  if (!request) blockedReason = "missing";
-  else if (!eligibility.ok) blockedReason = eligibility.reason ?? "status";
+  const blocked = !request || !isSolicitacaoCompraAlteravelPorStatus(request);
 
   React.useEffect(() => {
-    if (blockedReason === "missing") {
+    if (!request) {
       toast.error("Selecione uma solicitação em aberto ou bloqueada para alterar.");
       return;
     }
-    if (blockedReason === "status" || blockedReason === "solicitante") {
-      toast.error(
-        getAlterarSolicitacaoMessage({ ok: false, reason: blockedReason }),
-      );
+    if (!isSolicitacaoCompraAlteravelPorStatus(request)) {
+      toast.error(ALTERAR_SOLICITACAO_STATUS_MESSAGE);
     }
-  }, [blockedReason]);
+  }, [request]);
 
   if (blocked || !request) {
     return <Navigate to="/solicitacoes-compra" replace />;

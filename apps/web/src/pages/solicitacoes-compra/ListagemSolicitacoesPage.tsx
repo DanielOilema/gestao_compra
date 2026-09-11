@@ -77,7 +77,6 @@ const ListagemSolicitacoesPage: React.FC = () => {
         onOpenChange={(open) => {
           if (!open) handleCloseDetail();
         }}
-        onAlterar={handleAlterar}
       />
     </div>
   );

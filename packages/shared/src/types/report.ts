@@ -138,6 +138,11 @@ export interface ReportFilterDef {
   valorPadrao?: string;
   /** Obrigatório quando tipo === 'selecao'. */
   opcoes?: ReportFilterOption[];
+  /**
+   * Chave de lookup remoto para `tipo === 'selecao'`. O renderizador resolve as opções
+   * sem conhecer o domínio do relatório.
+   */
+  fonteOpcoes?: string;
   placeholder?: string;
 }
 

@@ -7,14 +7,12 @@ interface SolicitacaoCompraDetailDialogProps {
   request: PurchaseRequest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAlterar?: () => void;
 }
 
 const SolicitacaoCompraDetailDialog: React.FC<SolicitacaoCompraDetailDialogProps> = ({
   request,
   open,
   onOpenChange,
-  onAlterar,
 }) => {
   if (!request) return null;
 
@@ -24,7 +22,6 @@ const SolicitacaoCompraDetailDialog: React.FC<SolicitacaoCompraDetailDialogProps
         <SolicitacaoCompraDetailContent
           request={request}
           onBack={() => onOpenChange(false)}
-          onAlterar={onAlterar}
         />
       </DialogContent>
     </Dialog>

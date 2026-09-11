@@ -99,6 +99,38 @@ describe("buildReportPdfDefinition", () => {
 
     expect(texts.some((text) => text.includes("Nenhum registro encontrado"))).toBe(true);
   });
+
+  it("sizes PDF columns from header and cell content instead of stretching text equally", () => {
+    const definition = buildReportPdfDefinition({
+      colunas: [
+        { key: "filial", label: "Filial", formato: "texto" },
+        { key: "numero", label: "Número", formato: "texto" },
+        {
+          key: "descricao",
+          label: "Descrição",
+          formato: "texto",
+          largura: 40,
+        },
+      ],
+      linhas: [
+        { filial: "0101", numero: "009781", descricao: "ALUGUEL DE VEICULOS - RECIBO" },
+        { filial: "0101", numero: "009788", descricao: "PAO COM PRESUNTO E QUEIJO" },
+      ],
+      meta: { titulo: "Solicitações de Compras" },
+    });
+    const content = definition.content as Array<Record<string, unknown>>;
+    const table = content.find((item) => "table" in item) as {
+      table: { widths: number[] };
+    };
+
+    const [filialWidth, numeroWidth, descricaoWidth] = table.table.widths;
+
+    expect(filialWidth).toBeGreaterThan(0);
+    expect(numeroWidth).toBeGreaterThan(0);
+    expect(descricaoWidth).toBeGreaterThan(filialWidth);
+    expect(descricaoWidth).toBeGreaterThan(numeroWidth);
+    expect(filialWidth + numeroWidth + descricaoWidth).toBeLessThanOrEqual(800);
+  });
 });
 
 describe("buildXlsxBlob", () => {

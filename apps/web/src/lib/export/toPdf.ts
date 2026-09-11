@@ -66,14 +66,73 @@ const alignmentOf = (coluna: ReportColumn): "left" | "center" | "right" => {
   return isNumericReportFormat(coluna.formato) ? "right" : "left";
 };
 
+const A4_WIDTH_PT = 595.28;
+const A4_HEIGHT_PT = 841.89;
+const PAGE_MARGINS: [number, number, number, number] = [24, 28, 24, 36];
+const MIN_COLUMN_WIDTH_PT = 28;
+/** Evita que um texto longo monopolize a página; o restante quebra linha. */
+const TEXT_CONTENT_CHAR_CAP = 32;
+const NUMERIC_CONTENT_CHAR_CAP = 16;
+
+const pageContentWidth = (landscape: boolean): number =>
+  (landscape ? A4_HEIGHT_PT : A4_WIDTH_PT) - PAGE_MARGINS[0] - PAGE_MARGINS[2];
+
+const columnContentWeight = (
+  coluna: ReportColumn,
+  linhas: ExportPayload["linhas"],
+): number => {
+  const headerChars = coluna.label.trim().length;
+  let maxContentChars = 0;
+
+  for (const linha of linhas) {
+    const text = formatReportValue(linha[coluna.key] ?? null, coluna.formato);
+    maxContentChars = Math.max(maxContentChars, text.length);
+  }
+
+  const cap =
+    isNumericReportFormat(coluna.formato) || coluna.formato === "data"
+      ? NUMERIC_CONTENT_CHAR_CAP
+      : TEXT_CONTENT_CHAR_CAP;
+
+  return Math.max(4, headerChars, Math.min(Math.max(maxContentChars, coluna.largura ?? 0), cap));
+};
+
 /**
- * `largura` do contrato é medida em caracteres e serve ao Excel. No PDF as colunas numéricas ficam
- * no tamanho do conteúdo e as de texto dividem o espaço restante, o que evita estouro de página.
+ * Larguras em pontos proporcionais ao conteúdo (cabeçalho, células e `largura` declarada),
+ * limitadas à área útil da página. Colunas curtas como Filial ficam estreitas; descrição e
+ * observação recebem mais espaço e quebram linha.
  */
-const widthsOf = (colunas: ReportColumn[]): Array<string> =>
-  colunas.map((coluna) =>
-    isNumericReportFormat(coluna.formato) || coluna.formato === "data" ? "auto" : "*",
+export const computePdfColumnWidths = (
+  colunas: ReportColumn[],
+  linhas: ExportPayload["linhas"],
+  landscape: boolean,
+): number[] => {
+  if (colunas.length === 0) return [];
+
+  const available = pageContentWidth(landscape);
+  const weights = colunas.map((coluna) => columnContentWeight(coluna, linhas));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0) || 1;
+  const widths = weights.map((weight) => (weight / totalWeight) * available);
+  const belowMin = widths.filter((width) => width < MIN_COLUMN_WIDTH_PT).length;
+
+  if (belowMin === 0) return widths;
+  if (belowMin === widths.length) {
+    return widths.map(() => available / widths.length);
+  }
+
+  const reserved = belowMin * MIN_COLUMN_WIDTH_PT;
+  const leftover = Math.max(available - reserved, 0);
+  const flexibleWeight = weights.reduce(
+    (sum, weight, index) => (widths[index] < MIN_COLUMN_WIDTH_PT ? sum : sum + weight),
+    0,
   );
+
+  return widths.map((width, index) => {
+    if (width < MIN_COLUMN_WIDTH_PT) return MIN_COLUMN_WIDTH_PT;
+    if (flexibleWeight <= 0) return width;
+    return (weights[index] / flexibleWeight) * leftover;
+  });
+};
 
 export function buildReportPdfDefinition({
   colunas,
@@ -81,6 +140,7 @@ export function buildReportPdfDefinition({
   meta,
 }: ExportPayload): TDocumentDefinitions {
   const landscape = colunas.length > LANDSCAPE_COLUMN_THRESHOLD;
+  const widths = computePdfColumnWidths(colunas, linhas, landscape);
 
   const header = colunas.map((coluna) => ({
     text: coluna.label,
@@ -117,7 +177,7 @@ export function buildReportPdfDefinition({
   return {
     pageSize: "A4",
     pageOrientation: landscape ? "landscape" : "portrait",
-    pageMargins: [24, 28, 24, 36],
+    pageMargins: PAGE_MARGINS,
     defaultStyle: { font: "Roboto", fontSize: TABLE_FONT_SIZE },
     content: [
       { text: meta.titulo, style: "titulo" },
@@ -136,7 +196,7 @@ export function buildReportPdfDefinition({
             table: {
               headerRows: 1,
               dontBreakRows: true,
-              widths: widthsOf(colunas),
+              widths,
               body: [header, ...body, ...totalsRow],
             },
             layout: "lightHorizontalLines",

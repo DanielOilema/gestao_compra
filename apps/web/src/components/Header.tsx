@@ -16,6 +16,8 @@ import {
   Avatar,
   AvatarFallback,
   Badge,
+  SidebarTrigger,
+  useSidebar,
 } from "@gestao-compra/ui";
 import { LogOut, Shield } from "lucide-react";
 import logocinza from "@/assets/logocinza.png";
@@ -23,8 +25,11 @@ import logocinza from "@/assets/logocinza.png";
 const Header: React.FC = () => {
   const { user, logout, hasPermission } = useAuth();
   const { ambiente, isProducao, setAmbiente } = useEnvironment();
+  const { open, openMobile, isMobile } = useSidebar();
   const navigate = useNavigate();
   const canManagePermissions = hasPermission("gestao-permissoes");
+  const menuVisible = isMobile ? openMobile : open;
+  const menuLabel = menuVisible ? "Ocultar menu" : "Mostrar menu";
 
   const displayName = user?.nome?.trim() || user?.userName?.trim() || "Usuário";
 
@@ -44,15 +49,29 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-secondary text-secondary-foreground shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
-        <div className="flex items-center justify-between gap-2">
-          <Link to="/home" className="flex items-center gap-3 hover:opacity-90 transition-opacity min-w-0">
-            <img src={logocinza} alt="Oilema - Sementes para o novo campo" className="h-10 object-contain" />
-            <div className="hidden sm:block min-w-0">
-              <h1 className="text-lg font-semibold leading-tight">Protheus Connect</h1>
-            </div>
-          </Link>
+    <header className="sticky top-0 z-50 bg-secondary text-secondary-foreground shadow-[0_4px_6px_-1px_rgb(0_0_0/0.15)] md:h-16">
+      <div
+        className={
+          !isMobile && !open
+            ? "container mx-auto flex h-full items-center px-3 py-2 sm:px-4 sm:py-3 md:py-0 md:pl-14"
+            : "container mx-auto flex h-full items-center px-3 py-2 sm:px-4 sm:py-3 md:py-0"
+        }
+      >
+        <div className="flex w-full items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <SidebarTrigger
+              className="text-secondary-foreground hover:bg-secondary-foreground/10 md:hidden"
+              aria-label={menuLabel}
+              title={menuLabel}
+              aria-expanded={menuVisible}
+            />
+            <Link to="/home" className="flex items-center gap-3 hover:opacity-90 transition-opacity min-w-0">
+              <img src={logocinza} alt="Oilema - Sementes para o novo campo" className="h-10 object-contain" />
+              <div className="hidden sm:block min-w-0">
+                <h1 className="text-lg font-semibold leading-tight">Protheus Connect</h1>
+              </div>
+            </Link>
+          </div>
 
           {user && (
             <DropdownMenu>

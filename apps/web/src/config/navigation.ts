@@ -4,6 +4,7 @@ import {
   Landmark,
   Receipt,
   ShoppingCart,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 import type { RoutinePermissionId } from "@gestao-compra/shared";
@@ -63,6 +64,21 @@ export const appModuleGroups: AppModuleGroup[] = [
     ],
   },
   {
+    id: "logistica",
+    title: "Logística",
+    routines: [
+      {
+        id: "transportadoras",
+        title: "Transportadoras",
+        description: "Consultar e cadastrar transportadoras",
+        path: "/transportadoras",
+        icon: Truck,
+        enabled: true,
+        permissionKey: "transportadoras",
+      },
+    ],
+  },
+  {
     id: "relatorios",
     title: "Relatórios",
     routines: [
@@ -82,7 +98,7 @@ export const appModuleGroups: AppModuleGroup[] = [
         description: "Consultar indicadores e relatórios do módulo de compras",
         path: "/relatorios/compras",
         icon: ShoppingCart,
-        enabled: false,
+        enabled: true,
         permissionKey: "relatorios-compras",
       },
     ],

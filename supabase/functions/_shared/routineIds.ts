@@ -3,6 +3,7 @@ export const ROUTINE_IDS = [
   'aprovacoes',
   'solicitacoes-compra',
   'notas-debito-credito',
+  'transportadoras',
   'relatorios-financeiro',
   'relatorios-compras',
   'gestao-permissoes',

@@ -26,7 +26,8 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { basicAuth, filial, solicitante, tipoCompra, itens, ambiente } = body;
+    const { basicAuth, filial, solicitante, tipoCompra, itens, ambiente, numeroSC } = body;
+    const acao = Number(body.acao) === 4 ? 4 : 3;
 
     if (!isValidBasicAuth(basicAuth) || !filial || !solicitante || !tipoCompra || !Array.isArray(itens) || itens.length === 0) {
       return new Response(
@@ -38,7 +39,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    const payload = { filial, solicitante, tipoCompra, itens };
+    if (acao === 4 && !numeroSC) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'numeroSC é obrigatório para alteração da solicitação',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const payload =
+      acao === 4
+        ? { filial, solicitante, tipoCompra, itens, acao, numeroSC }
+        : { filial, solicitante, tipoCompra, itens, acao };
 
     const response = await fetch(protheusUrl('/rest/incluiSC', ambiente), {
       method: 'POST',
@@ -66,16 +80,18 @@ Deno.serve(async (req) => {
     const protheusSuccess =
       normalizeSuccess(data?.sucesso) || normalizeSuccess(data?.success);
     const mensagem = readMessage(data);
-    const numeroSC =
+    const numeroRetorno =
       typeof data?.numeroSC === 'string' || typeof data?.numeroSC === 'number'
         ? String(data.numeroSC)
-        : undefined;
+        : acao === 4
+          ? String(numeroSC)
+          : undefined;
 
     if (!response.ok || !protheusSuccess) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: mensagem || `Falha ao incluir solicitação (HTTP ${response.status})`,
+          error: mensagem || `Falha ao ${acao === 4 ? 'alterar' : 'incluir'} solicitação (HTTP ${response.status})`,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -85,8 +101,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         data: {
-          mensagem: mensagem || 'Solicitação de compra incluída com sucesso',
-          numeroSC,
+          mensagem: mensagem || (acao === 4
+            ? 'Solicitação de compra alterada com sucesso'
+            : 'Solicitação de compra incluída com sucesso'),
+          numeroSC: numeroRetorno,
         },
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

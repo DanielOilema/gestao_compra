@@ -1,4 +1,7 @@
 import {
+  RELATORIO_SC_SETORES_ID,
+  RELATORIO_SC_SETORES_LOOKUP_GRUPOS,
+  RELATORIO_SC_SETORES_TITULO,
   sortReportDefinitions,
   type ReportDefinition,
   type ReportModuleId,
@@ -11,7 +14,32 @@ import {
  * Protheus, mantendo esta lista como fallback — por isso os consumidores acessam sempre pelas
  * funções abaixo, nunca pelo array direto.
  */
-export const reportDefinitions: ReportDefinition[] = [];
+export const reportDefinitions: ReportDefinition[] = [
+  {
+    id: RELATORIO_SC_SETORES_ID,
+    modulo: "compras",
+    titulo: RELATORIO_SC_SETORES_TITULO,
+    descricao: "Consultar solicitações de compra por período e grupo de compras",
+    icone: "ShoppingCart",
+    ordem: 1,
+    filtros: [
+      {
+        key: "dt",
+        label: "Período",
+        tipo: "periodo",
+        obrigatorio: true,
+      },
+      {
+        key: "grupoAprovacao",
+        label: "Grupo de compras",
+        tipo: "selecao",
+        obrigatorio: true,
+        fonteOpcoes: RELATORIO_SC_SETORES_LOOKUP_GRUPOS,
+        placeholder: "Selecione um grupo",
+      },
+    ],
+  },
+];
 
 export const findReportDefinition = (reportId: string): ReportDefinition | undefined =>
   reportDefinitions.find((report) => report.id === reportId);

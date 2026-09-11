@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -9,11 +9,12 @@ import {
   Textarea,
 } from "@gestao-compra/ui";
 import {
-  canAlterSolicitacaoCompra,
+  ACAO_ALTERA_SC,
+  ACAO_INCLUI_SC,
+  ALTERAR_SOLICITACAO_STATUS_MESSAGE,
   formatNumeroSc,
-  getAlterarSolicitacaoMessage,
   getDefaultDataEntrega,
-  mapFormToAlteraSCPayload,
+  isSolicitacaoCompraAlteravelPorStatus,
   mapFormToIncluiSCPayload,
   mapPurchaseRequestToSolicitacaoDraft,
   type PurchaseRequest,
@@ -22,7 +23,6 @@ import {
   type TipoCompra,
 } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAlteraSolicitacao } from "@/hooks/useAlteraSolicitacao";
 import { useIncluiSolicitacao } from "@/hooks/useIncluiSolicitacao";
 import { brDateToIso, isoToBrDate } from "@/lib/dateBr";
 import BrDateInput from "@/components/shared/BrDateInput";
@@ -32,6 +32,10 @@ import ProdutoCombobox from "./inclusao/ProdutoCombobox";
 import CentroCustoCombobox from "./inclusao/CentroCustoCombobox";
 import SolicitacaoItensTable from "./inclusao/SolicitacaoItensTable";
 import { isSolicitacaoAlterFormDirty, isSolicitacaoFormDirty, type SolicitacaoDraftState } from "./inclusao/solicitacaoFormDirty";
+import {
+  mapPurchaseRequestToInclusaoDraft,
+  type NovaSolicitacaoLocationState,
+} from "./inclusao/copySolicitacaoCompra";
 import { useSolicitacaoLeave } from "./inclusao/SolicitacaoLeaveContext";
 import FormField from "@/components/inclusao/FormField";
 import FormSection from "@/components/inclusao/FormSection";
@@ -79,15 +83,22 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
   initialRequest,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { setIsDirty, confirmLeave } = useSolicitacaoLeave();
   const incluiMutation = useIncluiSolicitacao();
-  const alteraMutation = useAlteraSolicitacao();
-  const isAlter = mode === "alterar";
-  const initialDraft = React.useMemo(
-    () => (initialRequest ? mapPurchaseRequestToSolicitacaoDraft(initialRequest) : null),
-    [initialRequest],
+  const locationState = location.state as NovaSolicitacaoLocationState | null;
+  const [alterRequest] = React.useState<PurchaseRequest | undefined>(
+    () => initialRequest ?? locationState?.alterFrom,
   );
+  const isAlter = mode === "alterar" || Boolean(alterRequest);
+  const [initialDraft] = React.useState(() => {
+    if (alterRequest) {
+      return mapPurchaseRequestToSolicitacaoDraft(alterRequest);
+    }
+    const copyFrom = locationState?.copyFrom;
+    return copyFrom ? mapPurchaseRequestToInclusaoDraft(copyFrom) : null;
+  });
   const [filial, setFilial] = React.useState(initialDraft?.filial ?? "");
   const [filialError, setFilialError] = React.useState<string>();
   const [tipoCompra, setTipoCompra] = React.useState<TipoCompra | "">(initialDraft?.tipoCompra ?? "");
@@ -100,9 +111,9 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
   const [editingId, setEditingId] = React.useState<string | null>(null);
 
   const filialSelected = Boolean(filial);
-  const isSubmitting = incluiMutation.isPending || alteraMutation.isPending;
+  const isSubmitting = incluiMutation.isPending;
   const defaultDataEntregaBr = tipoCompra ? isoToBrDate(getDefaultDataEntrega(tipoCompra)) : "";
-  const numeroScLabel = initialRequest ? formatNumeroSc(initialRequest.numero) : "";
+  const numeroScLabel = alterRequest ? formatNumeroSc(alterRequest.numero) : "";
 
   React.useEffect(() => {
     const draftState: SolicitacaoDraftState = {
@@ -264,23 +275,19 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
 
     try {
       if (isAlter) {
-        if (!initialRequest) {
-          toast.error("Solicitação inválida para alteração.");
+        if (!alterRequest || !isSolicitacaoCompraAlteravelPorStatus(alterRequest)) {
+          toast.error(ALTERAR_SOLICITACAO_STATUS_MESSAGE);
           return;
         }
-        const eligibility = canAlterSolicitacaoCompra(initialRequest, user);
-        if (!eligibility.ok) {
-          toast.error(getAlterarSolicitacaoMessage(eligibility));
-          return;
-        }
-        const apiPayload = mapFormToAlteraSCPayload(
-          formPayload,
-          solicitante,
-          initialRequest.numero,
-        );
-        await alteraMutation.mutateAsync(apiPayload);
+        const apiPayload = mapFormToIncluiSCPayload(formPayload, solicitante, {
+          acao: ACAO_ALTERA_SC,
+          numeroSC: alterRequest.numero,
+        });
+        await incluiMutation.mutateAsync(apiPayload);
       } else {
-        const apiPayload = mapFormToIncluiSCPayload(formPayload, solicitante);
+        const apiPayload = mapFormToIncluiSCPayload(formPayload, solicitante, {
+          acao: ACAO_INCLUI_SC,
+        });
         await incluiMutation.mutateAsync(apiPayload);
       }
       setIsDirty(false);

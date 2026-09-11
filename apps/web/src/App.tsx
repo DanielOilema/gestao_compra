@@ -23,6 +23,8 @@ const RelatoriosLayout = lazy(() => import("@/pages/relatorios/RelatoriosLayout"
 const RelatoriosModulePage = lazy(() => import("@/pages/relatorios/RelatoriosModulePage"));
 const RelatorioPage = lazy(() => import("@/pages/relatorios/RelatorioPage"));
 const PermissoesPage = lazy(() => import("@/pages/admin/PermissoesPage"));
+const TransportadorasLayout = lazy(() => import("@/pages/transportadoras/TransportadorasLayout"));
+const NovaTransportadoraPage = lazy(() => import("@/pages/transportadoras/NovaTransportadoraPage"));
 
 const queryClient = new QueryClient();
 
@@ -89,6 +91,17 @@ const App = () => (
                     <Route path="/relatorios/:moduloId" element={<RelatoriosLayout />}>
                       <Route index element={<RelatoriosModulePage />} />
                       <Route path=":reportId" element={<RelatorioPage />} />
+                    </Route>
+
+                    <Route
+                      path="/transportadoras"
+                      element={
+                        <PermissionRoute permission="transportadoras">
+                          <TransportadorasLayout />
+                        </PermissionRoute>
+                      }
+                    >
+                      <Route path="nova" element={<NovaTransportadoraPage />} />
                     </Route>
 
                     <Route

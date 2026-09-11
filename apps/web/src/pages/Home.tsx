@@ -14,11 +14,16 @@ const Home: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
             Olá, {firstName}!
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground md:hidden">
             Selecione um módulo para continuar
           </p>
+          <p className="mt-1 hidden text-sm text-muted-foreground md:block">
+            Use o menu lateral para acessar as rotinas. Ele pode ser ocultado no canto superior esquerdo.
+          </p>
         </div>
-        <MenuGrid />
+        <div className="md:hidden">
+          <MenuGrid />
+        </div>
       </div>
     </AppLayout>
   );

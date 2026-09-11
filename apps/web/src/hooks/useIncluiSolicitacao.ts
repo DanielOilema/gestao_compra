@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { IncluiSCPayload, IncluiSCResult } from "@gestao-compra/shared";
+import { ACAO_ALTERA_SC, type IncluiSCPayload, type IncluiSCResult } from "@gestao-compra/shared";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
@@ -14,10 +14,11 @@ export const useIncluiSolicitacao = () => {
         throw new Error("Sessão inválida. Faça login novamente.");
       }
 
+      const isAlter = payload.acao === ACAO_ALTERA_SC;
       return invokeProtheusFunction<IncluiSCResult>(
         "protheus-inclui-sc",
         { ...payload, basicAuth: protheusAuth },
-        "Falha ao incluir solicitação de compra",
+        isAlter ? "Falha ao alterar solicitação de compra" : "Falha ao incluir solicitação de compra",
       );
     },
     onSuccess: (result) => {
@@ -25,8 +26,12 @@ export const useIncluiSolicitacao = () => {
       toast.success(`${result.mensagem}${numero}`);
       void queryClient.invalidateQueries({ queryKey: ["solicitacoes-compra"] });
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Falha ao incluir solicitação");
+    onError: (error, payload) => {
+      const fallback =
+        payload.acao === ACAO_ALTERA_SC
+          ? "Falha ao alterar solicitação"
+          : "Falha ao incluir solicitação";
+      toast.error(error instanceof Error ? error.message : fallback);
     },
   });
 };
