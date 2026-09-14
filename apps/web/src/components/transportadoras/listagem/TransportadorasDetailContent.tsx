@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getTipoAnttLabel,
   getViaTransporteLabel,
@@ -12,7 +13,8 @@ import {
   CardTitle,
   Skeleton,
 } from "@gestao-compra/ui";
-import { ArrowLeft, Building2, MapPin, Phone, Truck } from "lucide-react";
+import { ArrowLeft, Building2, MapPin, Pencil, Phone, Truck } from "lucide-react";
+import type { TransportadoraFormLocationState } from "@/components/transportadoras/inclusao/transportadoraFormState";
 
 interface TransportadorasDetailContentProps {
   transportadora: TransportadoraDetalhe;
@@ -33,7 +35,16 @@ const TransportadorasDetailContent: React.FC<TransportadorasDetailContentProps> 
   transportadora,
   loading,
   onBack,
-}) => (
+}) => {
+  const navigate = useNavigate();
+
+  const handleAlterar = () => {
+    if (loading || !transportadora.codigo) return;
+    const state: TransportadoraFormLocationState = { alterFrom: transportadora };
+    navigate("/transportadoras/nova", { state });
+  };
+
+  return (
   <div className="animate-fade-in space-y-4 sm:space-y-6">
     <div className="flex items-center gap-3 sm:gap-4">
       <Button variant="ghost" size="icon" onClick={onBack} className="shrink-0">
@@ -144,7 +155,21 @@ const TransportadorasDetailContent: React.FC<TransportadorasDetailContentProps> 
         </CardContent>
       </Card>
     </div>
+
+    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <Button
+        size="sm"
+        variant="outline"
+        className="w-full sm:w-auto"
+        disabled={loading || !transportadora.codigo}
+        onClick={handleAlterar}
+      >
+        <Pencil className="mr-2 h-4 w-4" />
+        Alterar
+      </Button>
+    </div>
   </div>
-);
+  );
+};
 
 export default TransportadorasDetailContent;

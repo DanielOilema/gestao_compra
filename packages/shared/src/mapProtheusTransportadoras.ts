@@ -1,6 +1,8 @@
-import { isTipoAntt } from './tipoAntt';
+import { isTipoAntt, mapProtheusTipoAntt } from './tipoAntt';
 import {
+  ACAO_ALTERA_TRANSPORTADORA,
   ACAO_INCLUI_TRANSPORTADORA,
+  type AcaoTransportadora,
   type IncluiTransportadoraPayload,
   type IncluiTransportadoraResult,
   type TransportadoraDetalhe,
@@ -8,7 +10,7 @@ import {
   type TransportadoraFormErrors,
   type TransportadoraListItem,
 } from './types/transportadora';
-import { isViaTransporte } from './viaTransporte';
+import { isViaTransporte, mapProtheusViaTransporte } from './viaTransporte';
 
 const t = (v: unknown) => {
   if (v == null) return '';
@@ -129,6 +131,7 @@ const digitsOrText = (value: string, digitsOnly: boolean) => {
 };
 
 export const emptyTransportadoraFormDraft = (): TransportadoraFormDraft => ({
+  codigo: '',
   nome: '',
   nomeReduzido: '',
   via: '',
@@ -147,6 +150,28 @@ export const emptyTransportadoraFormDraft = (): TransportadoraFormDraft => ({
   antt: '',
 });
 
+export const mapDetalheToTransportadoraDraft = (
+  detalhe: TransportadoraDetalhe,
+): TransportadoraFormDraft => ({
+  codigo: detalhe.codigo.trim(),
+  nome: detalhe.nome,
+  nomeReduzido: detalhe.nomeReduzido,
+  via: mapProtheusViaTransporte(detalhe.via) ?? (isViaTransporte(detalhe.via) ? detalhe.via : ''),
+  endereco: detalhe.endereco,
+  bairro: detalhe.bairro,
+  municipio: detalhe.municipio,
+  codMunicipio: detalhe.codMunicipio,
+  estado: detalhe.estado.trim().toUpperCase(),
+  cep: detalhe.cep,
+  ddd: detalhe.ddd,
+  telefone: detalhe.telefone,
+  cgc: detalhe.cgc,
+  tipoAntt: mapProtheusTipoAntt(detalhe.tipoAntt) ?? (isTipoAntt(detalhe.tipoAntt) ? detalhe.tipoAntt : ''),
+  inscEstadual: detalhe.inscEstadual,
+  email: detalhe.email,
+  antt: detalhe.antt,
+});
+
 export const validateTransportadoraForm = (
   draft: TransportadoraFormDraft,
 ): TransportadoraFormErrors => {
@@ -161,26 +186,33 @@ export const validateTransportadoraForm = (
 
 export const mapFormToIncluiTransportadoraPayload = (
   draft: TransportadoraFormDraft,
-): IncluiTransportadoraPayload => ({
-  nome: draft.nome.trim(),
-  nomeReduzido: draft.nomeReduzido.trim(),
-  via: draft.via,
-  endereco: draft.endereco.trim(),
-  bairro: draft.bairro.trim(),
-  municipio: draft.municipio.trim(),
-  estado: draft.estado.trim().toUpperCase(),
-  cep: digitsOrText(draft.cep, true),
-  ddd: digitsOrText(draft.ddd, true),
-  telefone: digitsOrText(draft.telefone, true),
-  cgc: digitsOrText(draft.cgc, true),
-  tipoAntt: draft.tipoAntt,
-  inscEstadual: draft.inscEstadual.trim(),
-  email: draft.email.trim(),
-  antt: draft.antt.trim(),
-  acao: ACAO_INCLUI_TRANSPORTADORA,
-  codMunicipio: draft.codMunicipio.trim(),
-  codMun: draft.codMunicipio.trim(),
-});
+  options?: { acao?: AcaoTransportadora },
+): IncluiTransportadoraPayload => {
+  const acao = options?.acao ?? ACAO_INCLUI_TRANSPORTADORA;
+  const codigo = draft.codigo.trim();
+
+  return {
+    nome: draft.nome.trim(),
+    nomeReduzido: draft.nomeReduzido.trim(),
+    via: draft.via,
+    endereco: draft.endereco.trim(),
+    bairro: draft.bairro.trim(),
+    municipio: draft.municipio.trim(),
+    estado: draft.estado.trim().toUpperCase(),
+    cep: digitsOrText(draft.cep, true),
+    ddd: digitsOrText(draft.ddd, true),
+    telefone: digitsOrText(draft.telefone, true),
+    cgc: digitsOrText(draft.cgc, true),
+    tipoAntt: draft.tipoAntt,
+    inscEstadual: draft.inscEstadual.trim(),
+    email: draft.email.trim(),
+    antt: draft.antt.trim(),
+    acao,
+    ...(acao === ACAO_ALTERA_TRANSPORTADORA && codigo ? { codigo } : {}),
+    codMunicipio: draft.codMunicipio.trim(),
+    codMun: draft.codMunicipio.trim(),
+  };
+};
 
 export const mapProtheusIncluiTransportadoraResponse = (
   res: unknown,

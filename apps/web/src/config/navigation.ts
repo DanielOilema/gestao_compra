@@ -17,6 +17,11 @@ export interface AppRoutine {
   icon: LucideIcon;
   enabled: boolean;
   permissionKey: RoutinePermissionId;
+  /**
+   * Se informado, o menu aparece quando o usuário tem qualquer uma destas permissões.
+   * Sem isso, vale apenas `permissionKey`.
+   */
+  anyOfPermissions?: RoutinePermissionId[];
   adminOnly?: boolean;
 }
 
@@ -100,6 +105,7 @@ export const appModuleGroups: AppModuleGroup[] = [
         icon: ShoppingCart,
         enabled: true,
         permissionKey: "relatorios-compras",
+        anyOfPermissions: ["relatorios-compras", "relatorios-pedidos", "relatorios-passagens"],
       },
     ],
   },

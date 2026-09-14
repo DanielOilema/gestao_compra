@@ -1,17 +1,22 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { REPORT_MODULE_LABELS } from "@gestao-compra/shared";
+import { getReportPermission, REPORT_MODULE_LABELS } from "@gestao-compra/shared";
 import { Card } from "@gestao-compra/ui";
 import { ChevronRight } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
 import { resolveReportIcon } from "@/components/relatorios/reportIcons";
 import { getReportsByModule } from "@/config/reports";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRelatoriosContext } from "./relatoriosContext";
 
 const RelatoriosModulePage: React.FC = () => {
   const { modulo } = useRelatoriosContext();
+  const { hasPermission } = useAuth();
 
-  const reports = useMemo(() => getReportsByModule(modulo), [modulo]);
+  const reports = useMemo(
+    () => getReportsByModule(modulo).filter((report) => hasPermission(getReportPermission(report))),
+    [modulo, hasPermission],
+  );
 
   return (
     <div className="animate-fade-in">

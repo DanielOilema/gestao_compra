@@ -5,6 +5,8 @@ export const ROUTINE_PERMISSION_IDS = [
   'transportadoras',
   'relatorios-financeiro',
   'relatorios-compras',
+  'relatorios-pedidos',
+  'relatorios-passagens',
   'gestao-permissoes',
 ] as const;
 
@@ -45,6 +47,8 @@ export const ROUTINE_LABELS: Record<RoutinePermissionId, string> = {
   transportadoras: 'Transportadoras',
   'relatorios-financeiro': 'Relatórios do Financeiro',
   'relatorios-compras': 'Solicitações de Compras',
+  'relatorios-pedidos': 'Pedidos de Compras',
+  'relatorios-passagens': 'Passagens e Hospedagens',
   'gestao-permissoes': 'Administrador',
 };
 
@@ -56,6 +60,8 @@ export const ASSIGNABLE_PERMISSION_IDS: RoutinePermissionId[] = [
   'transportadoras',
   'relatorios-financeiro',
   'relatorios-compras',
+  'relatorios-pedidos',
+  'relatorios-passagens',
   'gestao-permissoes',
 ];
 

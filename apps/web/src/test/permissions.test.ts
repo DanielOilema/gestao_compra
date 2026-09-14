@@ -46,4 +46,14 @@ describe("hasRoutineAccess", () => {
       hasRoutineAccess("gestao-permissoes", ["gestao-permissoes"], false, true),
     ).toBe(false);
   });
+
+  it("grants access when any listed report permission is present", () => {
+    expect(
+      hasRoutineAccess("relatorios-compras", ["relatorios-pedidos"], false, false, [
+        "relatorios-compras",
+        "relatorios-pedidos",
+        "relatorios-passagens",
+      ]),
+    ).toBe(true);
+  });
 });

@@ -16,5 +16,12 @@ export const TIPO_ANTT_OPTIONS: TipoAnttOption[] = [
 export const isTipoAntt = (value: string): value is TipoAntt =>
   (TIPO_ANTT_IDS as readonly string[]).includes(value);
 
+export const mapProtheusTipoAntt = (raw?: string): TipoAntt | undefined => {
+  const key = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  return isTipoAntt(key) ? key : undefined;
+};
+
 export const getTipoAnttLabel = (value: string): string =>
   TIPO_ANTT_OPTIONS.find((option) => option.value === value)?.label ?? value;

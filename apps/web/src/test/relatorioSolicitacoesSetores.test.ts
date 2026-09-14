@@ -27,6 +27,13 @@ describe("menu Relatórios de Compras", () => {
 
     expect(paths).not.toContain("/relatorios/compras");
   });
+
+  it("shows Relatórios de Compras when only the purchase orders report is granted", () => {
+    const menu = buildUserMenu(appModuleGroups, ["relatorios-pedidos"], false);
+    const paths = menu.flatMap((group) => group.routines.map((routine) => routine.path));
+
+    expect(paths).toContain("/relatorios/compras");
+  });
 });
 
 describe("catálogo do relatório de solicitações", () => {

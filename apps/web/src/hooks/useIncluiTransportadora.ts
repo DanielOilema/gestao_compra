@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { IncluiTransportadoraPayload, IncluiTransportadoraResult } from "@gestao-compra/shared";
+import {
+  ACAO_ALTERA_TRANSPORTADORA,
+  type IncluiTransportadoraPayload,
+  type IncluiTransportadoraResult,
+} from "@gestao-compra/shared";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { invokeProtheusFunction } from "@/lib/invokeProtheusFunction";
@@ -16,19 +20,25 @@ export const useIncluiTransportadora = () => {
         throw new Error("Sessão inválida. Faça login novamente.");
       }
 
+      const isAlter = payload.acao === ACAO_ALTERA_TRANSPORTADORA;
       return invokeProtheusFunction<IncluiTransportadoraResult>(
         "protheus-inclui-transportadora",
         { ...payload, basicAuth: protheusAuth },
-        "Falha ao incluir transportadora",
+        isAlter ? "Falha ao alterar transportadora" : "Falha ao incluir transportadora",
       );
     },
-    onSuccess: (result) => {
+    onSuccess: (result, payload) => {
+      const isAlter = payload.acao === ACAO_ALTERA_TRANSPORTADORA;
       const codigo = result.codigo ? ` ${result.codigo}` : "";
-      toast.success(`${result.mensagem}${codigo}`);
+      toast.success(`${result.mensagem}${isAlter ? "" : codigo}`);
       void queryClient.invalidateQueries({ queryKey: ["transportadoras"] });
     },
-    onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Falha ao incluir transportadora");
+    onError: (error, payload) => {
+      const fallback =
+        payload.acao === ACAO_ALTERA_TRANSPORTADORA
+          ? "Falha ao alterar transportadora"
+          : "Falha ao incluir transportadora";
+      toast.error(error instanceof Error ? error.message : fallback);
     },
   });
 };

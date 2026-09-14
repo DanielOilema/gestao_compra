@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isSolicitacaoAlterFormDirty } from "@/components/solicitacoes/inclusao/solicitacaoFormDirty";
+import {
+  isSolicitacaoAlterFormDirty,
+  isSolicitacaoItemObservacaoPreenchida,
+} from "@/components/solicitacoes/inclusao/solicitacaoFormDirty";
 import {
   ALTERAR_SOLICITACAO_SOLICITANTE_MESSAGE,
   ALTERAR_SOLICITACAO_STATUS_MESSAGE,
@@ -274,6 +277,18 @@ describe("mapProtheusListaSolicitacoesResponse", () => {
 
     expect(mapped.requests[0].tipoCompra).toBe("2");
     expect(mapped.requests[0].itens[0].dataEntrega).toBe("2026-08-20");
+  });
+});
+
+describe("isSolicitacaoItemObservacaoPreenchida", () => {
+  it("rejects empty or blank observation", () => {
+    expect(isSolicitacaoItemObservacaoPreenchida(undefined)).toBe(false);
+    expect(isSolicitacaoItemObservacaoPreenchida("")).toBe(false);
+    expect(isSolicitacaoItemObservacaoPreenchida("   ")).toBe(false);
+  });
+
+  it("accepts a filled observation", () => {
+    expect(isSolicitacaoItemObservacaoPreenchida("Urgente")).toBe(true);
   });
 });
 

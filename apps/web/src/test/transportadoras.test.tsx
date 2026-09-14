@@ -3,11 +3,13 @@ import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
+  ACAO_ALTERA_TRANSPORTADORA,
   ACAO_INCLUI_TRANSPORTADORA,
   TIPO_ANTT_OPTIONS,
   VIA_TRANSPORTE_OPTIONS,
   emptyTransportadoraFormDraft,
   filterTransportadorasByPesquisa,
+  mapDetalheToTransportadoraDraft,
   mapFormToIncluiTransportadoraPayload,
   mapProtheusIncluiTransportadoraResponse,
   mapProtheusMunicipioResponse,
@@ -15,11 +17,13 @@ import {
   mapProtheusTransportadorasList,
   municipioOptionKey,
   validateTransportadoraForm,
+  type TransportadoraDetalhe,
 } from "@gestao-compra/shared";
 import { appModuleGroups } from "@/config/navigation";
 import { permissionModuleGroups } from "@/components/permissoes/edicao/permissionModuleGroups";
 import { buildUserMenu } from "@/lib/buildUserMenu";
 import TransportadorasToolbar from "@/components/transportadoras/listagem/TransportadorasToolbar";
+import TransportadorasDetailContent from "@/components/transportadoras/listagem/TransportadorasDetailContent";
 import TransportadoraInclusaoForm from "@/components/transportadoras/inclusao/TransportadoraInclusaoForm";
 import { TransportadoraLeaveProvider } from "@/components/transportadoras/inclusao/TransportadoraLeaveContext";
 
@@ -38,6 +42,26 @@ vi.mock("@/hooks/useBuscaMunicipio", () => ({
     isError: false,
   }),
 }));
+
+const detalheAlteracao: TransportadoraDetalhe = {
+  codigo: "999999",
+  nome: "XXXX",
+  nomeReduzido: "",
+  via: "AEREO",
+  endereco: "RUA 01, N° 991",
+  bairro: "CENTRO II",
+  municipio: "AGUA BOA",
+  estado: "MT",
+  cep: "78635000",
+  ddd: "66",
+  telefone: "34683033",
+  cgc: "15023898000190",
+  tipoAntt: "TAC",
+  inscEstadual: "134122585",
+  email: "faturamento@somaar.com.br",
+  antt: "XXXXXXX",
+  codMunicipio: "5100201",
+};
 
 describe("menu Logística", () => {
   it("shows Transportadoras for an admin", () => {
@@ -184,6 +208,36 @@ describe("inclusão de transportadora", () => {
     expect(payload).not.toHaveProperty("codigo");
   });
 
+  it("maps a detail into the inclusion draft and builds the alterar payload with codigo", () => {
+    const draft = mapDetalheToTransportadoraDraft(detalheAlteracao);
+    const payload = mapFormToIncluiTransportadoraPayload(draft, {
+      acao: ACAO_ALTERA_TRANSPORTADORA,
+    });
+
+    expect(draft.codigo).toBe("999999");
+    expect(payload).toEqual({
+      codigo: "999999",
+      nome: "XXXX",
+      nomeReduzido: "",
+      via: "AEREO",
+      endereco: "RUA 01, N° 991",
+      bairro: "CENTRO II",
+      municipio: "AGUA BOA",
+      estado: "MT",
+      cep: "78635000",
+      ddd: "66",
+      telefone: "34683033",
+      cgc: "15023898000190",
+      tipoAntt: "TAC",
+      inscEstadual: "134122585",
+      email: "faturamento@somaar.com.br",
+      antt: "XXXXXXX",
+      acao: ACAO_ALTERA_TRANSPORTADORA,
+      codMunicipio: "5100201",
+      codMun: "5100201",
+    });
+  });
+
   it("exposes ANTT and via codes used by the comboboxes", () => {
     expect(TIPO_ANTT_OPTIONS.map((option) => option.value)).toEqual(["ETC", "CTC", "TAC"]);
     expect(VIA_TRANSPORTE_OPTIONS.map((option) => option.value)).toEqual([
@@ -247,6 +301,33 @@ describe("UI de transportadoras", () => {
     expect(screen.getByText("Informe o nome")).toBeInTheDocument();
     expect(screen.getByText("Informe o CPF/CNPJ")).toBeInTheDocument();
     expect(screen.getByText("Informe o RNTRC")).toBeInTheDocument();
+  });
+
+  it("shows the alterar button on the detail", () => {
+    render(
+      <MemoryRouter>
+        <TransportadorasDetailContent transportadora={detalheAlteracao} onBack={() => undefined} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("button", { name: /alterar/i })).toBeEnabled();
+  });
+
+  it("fills the inclusion form from the selected transportadora", () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: "/transportadoras/nova", state: { alterFrom: detalheAlteracao } },
+        ]}
+      >
+        <TransportadoraLeaveProvider>
+          <TransportadoraInclusaoForm />
+        </TransportadoraLeaveProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText("Código")).toHaveValue("999999");
+    expect(screen.getByLabelText("Nome *")).toHaveValue("XXXX");
+    expect(screen.getByRole("button", { name: "Salvar alteração" })).toBeInTheDocument();
   });
 });
 

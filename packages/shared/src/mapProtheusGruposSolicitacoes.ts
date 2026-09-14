@@ -33,7 +33,13 @@ export const mapProtheusGruposSolicitacoes = (res: unknown): GrupoSolicitacao[] 
     ? { grupos_solicitacoes: res }
     : ((res ?? {}) as Record<string, unknown>);
 
-  const rows = extractArray(record, ['grupos_solicitacoes', 'grupos', 'items', 'data']);
+  const rows = extractArray(record, [
+    'grupos_aprovacao',
+    'grupos_solicitacoes',
+    'grupos',
+    'items',
+    'data',
+  ]);
 
   return rows
     .filter((row): row is Record<string, unknown> => typeof row === 'object' && row !== null)

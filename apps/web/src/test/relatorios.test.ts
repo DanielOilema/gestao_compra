@@ -4,6 +4,7 @@ import {
   formatReportValue,
   getPeriodoFilterKeys,
   getReportModulePermission,
+  getReportPermission,
   isReportModuleId,
   sortReportDefinitions,
   type ReportDefinition,
@@ -52,6 +53,16 @@ describe("permissão por módulo", () => {
   it("derives the routine permission from the module", () => {
     expect(getReportModulePermission("financeiro")).toBe("relatorios-financeiro");
     expect(getReportModulePermission("compras")).toBe("relatorios-compras");
+  });
+
+  it("uses a specific report permission when declared", () => {
+    expect(
+      getReportPermission({ modulo: "compras", permission: "relatorios-pedidos" }),
+    ).toBe("relatorios-pedidos");
+    expect(
+      getReportPermission({ modulo: "compras", permission: "relatorios-passagens" }),
+    ).toBe("relatorios-passagens");
+    expect(getReportPermission({ modulo: "compras" })).toBe("relatorios-compras");
   });
 
   it("validates module ids coming from the URL", () => {

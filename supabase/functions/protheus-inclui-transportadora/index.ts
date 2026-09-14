@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
     const cgc = typeof payload.cgc === 'string' ? payload.cgc.trim() : '';
     const tipoAntt = typeof payload.tipoAntt === 'string' ? payload.tipoAntt.trim() : '';
     const antt = typeof payload.antt === 'string' ? payload.antt.trim() : '';
+    const acao =
+      typeof payload.acao === 'string' && payload.acao.trim().toLowerCase() === 'alterar'
+        ? 'alterar'
+        : 'incluir';
+    const codigoPayload = typeof payload.codigo === 'string' ? payload.codigo.trim() : '';
 
     if (!isValidBasicAuth(basicAuth) || !nome || !via || !cgc || !tipoAntt || !antt) {
       return new Response(
@@ -55,7 +60,18 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (acao === 'alterar' && !codigoPayload) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'codigo é obrigatório para alteração da transportadora',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const protheusPayload = {
+      ...(acao === 'alterar' ? { codigo: codigoPayload } : {}),
       nome,
       nomeReduzido: typeof payload.nomeReduzido === 'string' ? payload.nomeReduzido : '',
       via,
@@ -71,7 +87,7 @@ Deno.serve(async (req) => {
       inscEstadual: typeof payload.inscEstadual === 'string' ? payload.inscEstadual : '',
       email: typeof payload.email === 'string' ? payload.email : '',
       antt,
-      acao: 'incluir',
+      acao,
       codMunicipio: typeof payload.codMunicipio === 'string' ? payload.codMunicipio : '',
       codMun:
         typeof payload.codMun === 'string'
@@ -107,13 +123,13 @@ Deno.serve(async (req) => {
     const protheusSuccess =
       normalizeSuccess(data?.sucesso) || normalizeSuccess(data?.success);
     const mensagem = readMessage(data);
-    const codigo = readCodigo(data);
+    const codigoRetorno = readCodigo(data) || (acao === 'alterar' ? codigoPayload : undefined);
 
     if (!response.ok || !protheusSuccess) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: mensagem || `Falha ao incluir transportadora (HTTP ${response.status})`,
+          error: mensagem || `Falha ao ${acao === 'alterar' ? 'alterar' : 'incluir'} transportadora (HTTP ${response.status})`,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -123,8 +139,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         data: {
-          mensagem: mensagem || 'Transportadora incluída com sucesso',
-          codigo,
+          mensagem: mensagem || (acao === 'alterar'
+            ? 'Transportadora alterada com sucesso'
+            : 'Transportadora incluída com sucesso'),
+          codigo: codigoRetorno,
         },
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

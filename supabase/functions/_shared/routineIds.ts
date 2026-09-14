@@ -6,6 +6,8 @@ export const ROUTINE_IDS = [
   'transportadoras',
   'relatorios-financeiro',
   'relatorios-compras',
+  'relatorios-pedidos',
+  'relatorios-passagens',
   'gestao-permissoes',
 ] as const;
 

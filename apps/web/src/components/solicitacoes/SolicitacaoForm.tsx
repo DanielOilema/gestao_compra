@@ -31,7 +31,7 @@ import TipoCompraSelect from "./inclusao/TipoCompraSelect";
 import ProdutoCombobox from "./inclusao/ProdutoCombobox";
 import CentroCustoCombobox from "./inclusao/CentroCustoCombobox";
 import SolicitacaoItensTable from "./inclusao/SolicitacaoItensTable";
-import { isSolicitacaoAlterFormDirty, isSolicitacaoFormDirty, type SolicitacaoDraftState } from "./inclusao/solicitacaoFormDirty";
+import { isSolicitacaoAlterFormDirty, isSolicitacaoFormDirty, isSolicitacaoItemObservacaoPreenchida, type SolicitacaoDraftState } from "./inclusao/solicitacaoFormDirty";
 import {
   mapPurchaseRequestToInclusaoDraft,
   type NovaSolicitacaoLocationState,
@@ -48,7 +48,7 @@ const itemDraftSchema = z.object({
   centroCusto: z.string().min(1, "Selecione o centro de custo"),
   centroCustoDescricao: z.string().min(1, "Selecione o centro de custo"),
   quantidade: z.coerce.number().min(1, "Quantidade mínima: 1"),
-  observacao: z.string().optional(),
+  observacao: z.string().trim().min(1, "Informe a observação"),
   dataEntrega: z
     .string()
     .min(1, "Informe a data de entrega")
@@ -267,6 +267,11 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
       return;
     }
 
+    if (itens.some((item) => !isSolicitacaoItemObservacaoPreenchida(item.observacao))) {
+      toast.error("Há itens sem observação. Edite o item e informe a observação.");
+      return;
+    }
+
     const formPayload: SolicitacaoFormPayload = {
       filial,
       tipoCompra,
@@ -388,10 +393,15 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
           </FormField>
 
           <FormGridItem span={2}>
-            <FormField label="Observações" htmlFor="observacao">
+            <FormField
+              label="Observações"
+              htmlFor="observacao"
+              required
+              error={draftErrors.observacao}
+            >
               <Textarea
                 id="observacao"
-                placeholder="Observações do item (opcional)"
+                placeholder="Observações do item"
                 value={draft.observacao ?? ""}
                 disabled={!filialSelected}
                 onChange={(e) => updateDraft("observacao", e.target.value)}

@@ -1,15 +1,20 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   buildDefaultReportFilters,
+  RELATORIO_HOSP_PASS_ID,
+  RELATORIO_PC_SETORES_ID,
   RELATORIO_SC_SETORES_ID,
-  RELATORIO_SC_SETORES_LOOKUP_GRUPOS,
   type ReportDefinition,
   type ReportEnvelope,
 } from "@gestao-compra/shared";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { getRelatorioHospPass } from "@/hooks/getRelatorioHospPass";
+import { getRelatorioPcSetores } from "@/hooks/getRelatorioPcSetores";
 import { getRelatorioScSetores } from "@/hooks/getRelatorioScSetores";
 import { useReportLookups } from "@/hooks/useReportLookups";
+import { buildRelatorioHospPassExportPayload } from "@/lib/relatorios/buildRelatorioHospPassExportPayload";
+import { buildRelatorioPcSetoresExportPayload } from "@/lib/relatorios/buildRelatorioPcSetoresExportPayload";
 import { buildRelatorioScSetoresExportPayload } from "@/lib/relatorios/buildRelatorioScSetoresExportPayload";
 import { validateReportFilters } from "@/lib/relatorios/validateReportFilters";
 import type { ExportPayload } from "@/lib/export/types";
@@ -26,6 +31,23 @@ const fetchEnvelope = async (
       dtInicial: query.dtInicial,
       dtFinal: query.dtFinal,
       grupoAprovacao: query.grupoAprovacao,
+      basicAuth,
+    });
+  }
+
+  if (reportId === RELATORIO_PC_SETORES_ID) {
+    return getRelatorioPcSetores({
+      dtInicial: query.dtInicial,
+      dtFinal: query.dtFinal,
+      grupoAprovacao: query.grupoAprovacao,
+      basicAuth,
+    });
+  }
+
+  if (reportId === RELATORIO_HOSP_PASS_ID) {
+    return getRelatorioHospPass({
+      dtInicial: query.dtInicial,
+      dtFinal: query.dtFinal,
       basicAuth,
     });
   }
@@ -84,11 +106,14 @@ export function useRelatorioView(definition: ReportDefinition) {
     return allRows.slice((page - 1) * RELATORIO_PAGE_SIZE, page * RELATORIO_PAGE_SIZE);
   }, [envelope?.linhas, page]);
 
+  const grupoFonteOpcoes = definition.filtros.find((filtro) => filtro.key === "grupoAprovacao")
+    ?.fonteOpcoes;
+
   const grupoLabel = useMemo(() => {
     const codigo = appliedQuery?.grupoAprovacao ?? draftFilters.grupoAprovacao ?? "";
-    const options = lookups[RELATORIO_SC_SETORES_LOOKUP_GRUPOS]?.options ?? [];
+    const options = (grupoFonteOpcoes ? lookups[grupoFonteOpcoes]?.options : undefined) ?? [];
     return options.find((option) => option.valor === codigo)?.label ?? codigo;
-  }, [appliedQuery, draftFilters.grupoAprovacao, lookups]);
+  }, [appliedQuery, draftFilters.grupoAprovacao, grupoFonteOpcoes, lookups]);
 
   const getExportPayload = useCallback((): ExportPayload => {
     if (!envelope || !appliedQuery) {
@@ -105,6 +130,23 @@ export function useRelatorioView(definition: ReportDefinition) {
         dtInicial: appliedQuery.dtInicial,
         dtFinal: appliedQuery.dtFinal,
         grupoLabel,
+      });
+    }
+
+    if (definition.id === RELATORIO_PC_SETORES_ID) {
+      return buildRelatorioPcSetoresExportPayload({
+        envelope,
+        dtInicial: appliedQuery.dtInicial,
+        dtFinal: appliedQuery.dtFinal,
+        grupoLabel,
+      });
+    }
+
+    if (definition.id === RELATORIO_HOSP_PASS_ID) {
+      return buildRelatorioHospPassExportPayload({
+        envelope,
+        dtInicial: appliedQuery.dtInicial,
+        dtFinal: appliedQuery.dtFinal,
       });
     }
 

@@ -60,6 +60,15 @@ verify_jwt = false
 [functions.protheus-rel-sc-setores]
 verify_jwt = false
 
+[functions.protheus-grupos-aprovacao]
+verify_jwt = false
+
+[functions.protheus-rel-pc-setores]
+verify_jwt = false
+
+[functions.protheus-rel-hosp-pass]
+verify_jwt = false
+
 [functions.protheus-lista-transportadoras]
 verify_jwt = false
 

@@ -20,7 +20,7 @@ export const permissionModuleGroups: PermissionModuleGroup[] = [
   {
     id: "relatorios",
     title: "Relatórios",
-    permissions: ["relatorios-compras"],
+    permissions: ["relatorios-compras", "relatorios-pedidos", "relatorios-passagens"],
   },
   {
     id: "administracao",

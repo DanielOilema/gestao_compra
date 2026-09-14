@@ -2,6 +2,11 @@ import type { TipoAntt } from '../tipoAntt';
 import type { ViaTransporte } from '../viaTransporte';
 
 export const ACAO_INCLUI_TRANSPORTADORA = 'incluir' as const;
+export const ACAO_ALTERA_TRANSPORTADORA = 'alterar' as const;
+
+export type AcaoTransportadora =
+  | typeof ACAO_INCLUI_TRANSPORTADORA
+  | typeof ACAO_ALTERA_TRANSPORTADORA;
 
 export interface TransportadoraListItem {
   codigo: string;
@@ -30,6 +35,7 @@ export interface TransportadoraDetalhe {
 }
 
 export interface TransportadoraFormDraft {
+  codigo: string;
   nome: string;
   nomeReduzido: string;
   via: ViaTransporte | '';
@@ -64,7 +70,8 @@ export interface IncluiTransportadoraPayload {
   inscEstadual: string;
   email: string;
   antt: string;
-  acao: typeof ACAO_INCLUI_TRANSPORTADORA;
+  acao: AcaoTransportadora;
+  codigo?: string;
   codMunicipio: string;
   codMun: string;
 }

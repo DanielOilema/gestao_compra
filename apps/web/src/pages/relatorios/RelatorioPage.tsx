@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import type { ReportDefinition, ReportModuleId } from "@gestao-compra/shared";
+import { getReportPermission, type ReportDefinition, type ReportModuleId } from "@gestao-compra/shared";
 import { Alert, AlertDescription, Button, Card } from "@gestao-compra/ui";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import PageHeader from "@/components/layout/PageHeader";
@@ -9,6 +9,7 @@ import RelatorioFilterBar from "@/components/relatorios/RelatorioFilterBar";
 import RelatorioPagination from "@/components/relatorios/RelatorioPagination";
 import RelatorioTable from "@/components/relatorios/RelatorioTable";
 import { findReportDefinition } from "@/config/reports";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRelatorioView } from "@/hooks/useRelatorioView";
 import { useRelatoriosContext } from "./relatoriosContext";
 
@@ -19,14 +20,15 @@ import { useRelatoriosContext } from "./relatoriosContext";
 const RelatorioPage: React.FC = () => {
   const { modulo } = useRelatoriosContext();
   const { reportId } = useParams();
+  const { hasPermission } = useAuth();
 
   const definition = useMemo(() => {
     const found = reportId ? findReportDefinition(reportId) : undefined;
-    // Um relatório só é acessível pela URL do próprio módulo: o guard do layout validou a
-    // permissão do módulo da URL, então aceitar um relatório de outro módulo aqui seria um
-    // desvio de permissão.
-    return found?.modulo === modulo ? found : undefined;
-  }, [reportId, modulo]);
+    // Um relatório só é acessível pela URL do próprio módulo, e somente com a permissão da rotina.
+    if (found?.modulo !== modulo) return undefined;
+    if (!hasPermission(getReportPermission(found))) return undefined;
+    return found;
+  }, [reportId, modulo, hasPermission]);
 
   if (!definition) {
     return (

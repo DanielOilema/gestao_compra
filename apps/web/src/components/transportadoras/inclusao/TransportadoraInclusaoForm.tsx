@@ -1,10 +1,13 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Input } from "@gestao-compra/ui";
 import {
+  ACAO_ALTERA_TRANSPORTADORA,
+  ACAO_INCLUI_TRANSPORTADORA,
   emptyTransportadoraFormDraft,
+  mapDetalheToTransportadoraDraft,
   mapFormToIncluiTransportadoraPayload,
   municipioOptionKey,
   municipioOptionLabel,
@@ -22,19 +25,32 @@ import { useTransportadoraLeave } from "./TransportadoraLeaveContext";
 import ViaTransporteSelect from "./ViaTransporteSelect";
 import TipoAnttSelect from "./TipoAnttSelect";
 import MunicipioCombobox from "./MunicipioCombobox";
+import type { TransportadoraFormLocationState } from "./transportadoraFormState";
 
 const TransportadoraInclusaoForm: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setIsDirty, confirmLeave } = useTransportadoraLeave();
   const incluiMutation = useIncluiTransportadora();
-  const [draft, setDraft] = React.useState<TransportadoraFormDraft>(emptyTransportadoraFormDraft());
+  const [alterFrom] = React.useState(
+    () => (location.state as TransportadoraFormLocationState | null)?.alterFrom,
+  );
+  const isAlter = Boolean(alterFrom?.codigo);
+  const [initialDraft] = React.useState<TransportadoraFormDraft>(() =>
+    alterFrom ? mapDetalheToTransportadoraDraft(alterFrom) : emptyTransportadoraFormDraft(),
+  );
+  const [draft, setDraft] = React.useState<TransportadoraFormDraft>(initialDraft);
   const [errors, setErrors] = React.useState<TransportadoraFormErrors>({});
   const isSubmitting = incluiMutation.isPending;
 
   React.useEffect(() => {
+    if (isAlter) {
+      setIsDirty(JSON.stringify(draft) !== JSON.stringify(initialDraft));
+      return;
+    }
     const dirty = Object.entries(draft).some(([, value]) => Boolean(String(value).trim()));
     setIsDirty(dirty);
-  }, [draft, setIsDirty]);
+  }, [draft, initialDraft, isAlter, setIsDirty]);
 
   const updateDraft = <K extends keyof TransportadoraFormDraft>(
     key: K,
@@ -58,8 +74,17 @@ const TransportadoraInclusaoForm: React.FC = () => {
       return;
     }
 
+    if (isAlter && !draft.codigo.trim()) {
+      toast.error("Código da transportadora inválido");
+      return;
+    }
+
     try {
-      await incluiMutation.mutateAsync(mapFormToIncluiTransportadoraPayload(draft));
+      await incluiMutation.mutateAsync(
+        mapFormToIncluiTransportadoraPayload(draft, {
+          acao: isAlter ? ACAO_ALTERA_TRANSPORTADORA : ACAO_INCLUI_TRANSPORTADORA,
+        }),
+      );
       setIsDirty(false);
       navigate("/transportadoras");
     } catch {
@@ -69,10 +94,15 @@ const TransportadoraInclusaoForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
-      <FormSection title="Dados da transportadora">
+      <FormSection title={isAlter ? `Alterar transportadora ${draft.codigo}` : "Dados da transportadora"}>
         <FormGrid>
           <FormField label="Código" htmlFor="codigo">
-            <Input id="codigo" value="" disabled placeholder="Gerado automaticamente" />
+            <Input
+              id="codigo"
+              value={draft.codigo}
+              disabled
+              placeholder={isAlter ? undefined : "Gerado automaticamente"}
+            />
           </FormField>
 
           <FormGridItem span={2}>
@@ -266,6 +296,8 @@ const TransportadoraInclusaoForm: React.FC = () => {
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Salvando...
             </>
+          ) : isAlter ? (
+            "Salvar alteração"
           ) : (
             "Salvar"
           )}

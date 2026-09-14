@@ -165,7 +165,16 @@ export interface ReportDefinition {
   icone?: string;
   /** Ordem de exibição dentro do módulo. Ausente vai para o fim. */
   ordem?: number;
+  /**
+   * Permissão específica do relatório. Sem ela, vale a permissão do módulo
+   * (`relatorios-${modulo}`).
+   */
+  permission?: RoutinePermissionId;
 }
+
+export const getReportPermission = (
+  report: Pick<ReportDefinition, 'modulo' | 'permission'>,
+): RoutinePermissionId => report.permission ?? getReportModulePermission(report.modulo);
 
 export interface ReportRequest {
   reportId: string;

@@ -8,6 +8,10 @@ export interface SolicitacaoDraftState {
   dataEntrega?: string;
 }
 
+export function isSolicitacaoItemObservacaoPreenchida(value?: string): boolean {
+  return Boolean(value?.trim());
+}
+
 export function isSolicitacaoFormDirty(
   filial: string,
   tipoCompra: string,

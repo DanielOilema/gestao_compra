@@ -1,7 +1,9 @@
 import {
   BarChart3,
   CalendarClock,
+  ClipboardList,
   FileBarChart,
+  Hotel,
   Landmark,
   PieChart,
   Receipt,
@@ -18,7 +20,9 @@ import {
 const REPORT_ICONS: Record<string, LucideIcon> = {
   BarChart3,
   CalendarClock,
+  ClipboardList,
   FileBarChart,
+  Hotel,
   Landmark,
   PieChart,
   Receipt,
