@@ -245,6 +245,10 @@ const NotaInclusaoForm: React.FC = () => {
       toast.error("Centro de custo é obrigatório em todos os itens de débito");
       return;
     }
+    if (tipo === "debito" && itens.some((i) => !i.observacao?.trim())) {
+      toast.error("Observação é obrigatória em todos os itens de débito");
+      return;
+    }
     if (!responsavel) {
       toast.error("Responsável não identificado. Faça login novamente.");
       return;

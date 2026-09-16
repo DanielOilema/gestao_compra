@@ -27,7 +27,9 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const { basicAuth, filial, solicitante, tipoCompra, itens, ambiente, numeroSC } = body;
-    const acao = Number(body.acao) === 4 ? 4 : 3;
+    const acaoRaw = typeof body.acao === 'string' ? body.acao.trim().toLowerCase() : String(body.acao ?? '');
+    const isAlter = acaoRaw === 'alterar' || acaoRaw === '4';
+    const acao = isAlter ? 'alterar' : 'incluir';
 
     if (!isValidBasicAuth(basicAuth) || !filial || !solicitante || !tipoCompra || !Array.isArray(itens) || itens.length === 0) {
       return new Response(
@@ -39,7 +41,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (acao === 4 && !numeroSC) {
+    if (isAlter && !numeroSC) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -50,7 +52,7 @@ Deno.serve(async (req) => {
     }
 
     const payload =
-      acao === 4
+      isAlter
         ? { filial, solicitante, tipoCompra, itens, acao, numeroSC }
         : { filial, solicitante, tipoCompra, itens, acao };
 
@@ -83,7 +85,7 @@ Deno.serve(async (req) => {
     const numeroRetorno =
       typeof data?.numeroSC === 'string' || typeof data?.numeroSC === 'number'
         ? String(data.numeroSC)
-        : acao === 4
+        : isAlter
           ? String(numeroSC)
           : undefined;
 
@@ -91,7 +93,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: mensagem || `Falha ao ${acao === 4 ? 'alterar' : 'incluir'} solicitação (HTTP ${response.status})`,
+          error: mensagem || `Falha ao ${isAlter ? 'alterar' : 'incluir'} solicitação (HTTP ${response.status})`,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -101,7 +103,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         data: {
-          mensagem: mensagem || (acao === 4
+          mensagem: mensagem || (isAlter
             ? 'Solicitação de compra alterada com sucesso'
             : 'Solicitação de compra incluída com sucesso'),
           numeroSC: numeroRetorno,

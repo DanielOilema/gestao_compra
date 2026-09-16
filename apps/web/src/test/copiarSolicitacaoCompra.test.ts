@@ -103,7 +103,7 @@ describe("mapPurchaseRequestToInclusaoDraft", () => {
       filial: "0101",
       solicitante: "Maria Santos",
       tipoCompra: "1",
-      acao: 3,
+      acao: "incluir",
       itens: [
         {
           codigoProduto: "8001000013",

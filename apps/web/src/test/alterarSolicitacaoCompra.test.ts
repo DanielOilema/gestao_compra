@@ -207,7 +207,7 @@ describe("mapFormToAlteraSCPayload", () => {
       numeroSC: "000123",
       solicitante: "Daniel Silveira",
       tipoCompra: "2",
-      acao: 4,
+      acao: "alterar",
       itens: [
         {
           item: "0001",
@@ -221,7 +221,7 @@ describe("mapFormToAlteraSCPayload", () => {
     });
   });
 
-  it("maps an alter through the include payload with acao 4", () => {
+  it("maps an alter through the include payload with acao alterar", () => {
     const payload = mapFormToIncluiSCPayload(
       {
         filial: "0101",
@@ -240,10 +240,10 @@ describe("mapFormToAlteraSCPayload", () => {
         ],
       },
       "Daniel Silveira",
-      { acao: 4, numeroSC: "000123" },
+      { acao: "alterar", numeroSC: "000123" },
     );
 
-    expect(payload.acao).toBe(4);
+    expect(payload.acao).toBe("alterar");
     expect(payload.numeroSC).toBe("000123");
   });
 });

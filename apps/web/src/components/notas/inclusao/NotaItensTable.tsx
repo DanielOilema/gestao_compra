@@ -49,6 +49,7 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const ccRequired = tipo === "debito";
+  const obsRequired = tipo === "debito";
 
   const openDialog = () => {
     setDraft(emptyItem());
@@ -62,6 +63,9 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
     if (!draft.valor || draft.valor <= 0) nextErrors.valor = "Valor deve ser maior que zero";
     if (ccRequired && !draft.centroCusto) {
       nextErrors.centroCusto = "Centro de custo obrigatório para débito";
+    }
+    if (obsRequired && !draft.observacao?.trim()) {
+      nextErrors.observacao = "Observação obrigatória para débito";
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
@@ -209,13 +213,18 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
               error={errors.centroCusto}
             />
             <div className="space-y-2">
-              <Label htmlFor="item-obs">Observação</Label>
+              <Label htmlFor="item-obs">
+                Observação{obsRequired ? " *" : ""}
+              </Label>
               <Textarea
                 id="item-obs"
                 value={draft.observacao ?? ""}
                 onChange={(e) => setDraft((prev) => ({ ...prev, observacao: e.target.value }))}
                 rows={2}
               />
+              {errors.observacao ? (
+                <p className="text-sm text-destructive">{errors.observacao}</p>
+              ) : null}
             </div>
           </div>
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">

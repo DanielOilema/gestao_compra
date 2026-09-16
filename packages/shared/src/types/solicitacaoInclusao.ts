@@ -1,7 +1,7 @@
 import type { TipoCompra } from "../tipoCompra";
 
-export const ACAO_INCLUI_SC = 3 as const;
-export const ACAO_ALTERA_SC = 4 as const;
+export const ACAO_INCLUI_SC = "incluir" as const;
+export const ACAO_ALTERA_SC = "alterar" as const;
 
 export type AcaoSolicitacaoCompra = typeof ACAO_INCLUI_SC | typeof ACAO_ALTERA_SC;
 
