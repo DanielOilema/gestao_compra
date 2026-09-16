@@ -3,6 +3,16 @@ import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
 
+const readErrorMessage = (data: unknown): string | undefined => {
+  if (!data || typeof data !== 'object') return undefined;
+  const record = data as Record<string, unknown>;
+  for (const key of ['error', 'mensagem', 'message', 'descricao']) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return undefined;
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -18,7 +28,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(protheusUrl('/rest/busca_filiais', ambiente), {
+    const url = protheusUrl('/rest/busca_filiais', ambiente);
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -27,10 +38,11 @@ Deno.serve(async (req) => {
     });
 
     let data: unknown = null;
+    let parseError: string | undefined;
     try {
       data = await parseProtheusJson(response);
-    } catch {
-      // ignore
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : 'Resposta inválida do Protheus';
     }
 
     if (response.status === 401 || (data as { code?: number })?.code === 401) {
@@ -42,10 +54,18 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const message =
-        (data as { message?: string })?.message ||
+        readErrorMessage(data) ||
+        parseError ||
         `Falha ao buscar filiais (HTTP ${response.status})`;
       return new Response(
         JSON.stringify({ success: false, error: message }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (parseError) {
+      return new Response(
+        JSON.stringify({ success: false, error: `Falha ao interpretar filiais: ${parseError}` }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
