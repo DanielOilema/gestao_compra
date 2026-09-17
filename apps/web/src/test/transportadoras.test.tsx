@@ -140,6 +140,7 @@ describe("mapProtheusTransportadoraDetalhe", () => {
         inscEstadual: "134122585",
         email: "faturamento@somaar.com.br",
         antt: "61516",
+        codigoMun: "5100201",
       },
     });
 
@@ -150,7 +151,24 @@ describe("mapProtheusTransportadoraDetalhe", () => {
       tipoAntt: "TAC",
       antt: "61516",
       cgc: "15023898000190",
+      codMunicipio: "5100201",
     });
+  });
+
+  it("maps codigoMun into the alter draft used by the inclusion form", () => {
+    const detalhe = mapProtheusTransportadoraDetalhe({
+      codigo: "000016",
+      nome: "J W XAVIER E CIA LTDA",
+      municipio: "AGUA BOA",
+      estado: "MT",
+      codigoMun: 5100201,
+    });
+    const draft = mapDetalheToTransportadoraDraft(detalhe);
+
+    expect(detalhe.codMunicipio).toBe("5100201");
+    expect(draft.codMunicipio).toBe("5100201");
+    expect(draft.municipio).toBe("AGUA BOA");
+    expect(draft.estado).toBe("MT");
   });
 });
 

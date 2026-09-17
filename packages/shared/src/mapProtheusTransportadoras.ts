@@ -85,7 +85,15 @@ const mapDetalheRecord = (
   inscEstadual: readField(record, 'inscEstadual', 'inscestadual', 'ie'),
   email: readField(record, 'email'),
   antt: readField(record, 'antt', 'rntrc'),
-  codMunicipio: readField(record, 'codMunicipio', 'codmunicipio', 'codMun', 'codmun'),
+  codMunicipio: readField(
+    record,
+    'codigoMun',
+    'codigomun',
+    'codMunicipio',
+    'codmunicipio',
+    'codMun',
+    'codmun',
+  ),
 });
 
 export const mapProtheusTransportadorasList = (res: unknown): TransportadoraListItem[] => {
