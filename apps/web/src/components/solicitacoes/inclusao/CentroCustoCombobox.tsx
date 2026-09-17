@@ -10,6 +10,9 @@ interface CentroCustoComboboxProps {
   onValueChange: (custo: string, option?: CentroCustoOption) => void;
   disabled?: boolean;
   error?: string;
+  required?: boolean;
+  id?: string;
+  label?: string;
 }
 
 const CentroCustoCombobox: React.FC<CentroCustoComboboxProps> = ({
@@ -18,6 +21,9 @@ const CentroCustoCombobox: React.FC<CentroCustoComboboxProps> = ({
   onValueChange,
   disabled,
   error,
+  required = true,
+  id = "centro-custo",
+  label = "Centro de Custo",
 }) => {
   const [search, setSearch] = React.useState("");
   const debouncedSearch = useDebouncedValue(search, 300);
@@ -28,9 +34,12 @@ const CentroCustoCombobox: React.FC<CentroCustoComboboxProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="centro-custo">Centro de Custo *</Label>
+      <Label htmlFor={id}>
+        {label}
+        {required ? " *" : ""}
+      </Label>
       <EntityCombobox
-        id="centro-custo"
+        id={id}
         value={value}
         selectedLabel={selectedLabel}
         onValueChange={onValueChange}

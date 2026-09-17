@@ -110,6 +110,7 @@ describe("mapPurchaseRequestToInclusaoDraft", () => {
           quantidade: 10,
           centroCusto: "1101",
           observacao: "Urgente",
+          placa: "",
           dataEntrega: "2026-08-10",
         },
       ],

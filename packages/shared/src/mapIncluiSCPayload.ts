@@ -19,14 +19,29 @@ const mapFormItens = (
   form: SolicitacaoFormPayload,
   acao: AcaoSolicitacaoCompra,
 ): IncluiSCPayload["itens"] =>
-  form.itens.map((item) => ({
-    ...(acao === ACAO_ALTERA_SC && item.item?.trim() ? { item: item.item.trim() } : {}),
-    codigoProduto: item.produto,
-    quantidade: item.quantidade,
-    centroCusto: item.centroCusto,
-    observacao: item.observacao?.trim() || undefined,
-    dataEntrega: item.dataEntrega,
-  }));
+  form.itens.map((item) => {
+    const base = {
+      ...(acao === ACAO_ALTERA_SC && item.item?.trim() ? { item: item.item.trim() } : {}),
+      codigoProduto: item.produto,
+      quantidade: item.quantidade,
+      observacao: item.observacao?.trim() || undefined,
+      placa: item.placa?.trim() ?? "",
+      dataEntrega: item.dataEntrega,
+    };
+
+    const rateio = item.rateioCC
+      ?.map((row) => ({
+        cc: row.cc.trim(),
+        percentual: Number(row.percentual),
+      }))
+      .filter((row) => row.cc);
+
+    if (rateio && rateio.length > 0) {
+      return { ...base, rateioCC: rateio };
+    }
+
+    return { ...base, centroCusto: item.centroCusto };
+  });
 
 export const mapFormToIncluiSCPayload = (
   form: SolicitacaoFormPayload,
@@ -79,6 +94,7 @@ export const mapPurchaseRequestToSolicitacaoDraft = (
     centroCustoDescricao: item.descricaoCentroCusto ?? "",
     quantidade: item.quantidade,
     observacao: item.observacao ?? "",
+    placa: "",
     dataEntrega: item.dataEntrega || request.dataCriacao || "",
   })),
 });

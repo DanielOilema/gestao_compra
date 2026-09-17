@@ -37,6 +37,7 @@ export * from './setorNotaDC';
 export * from './notaPrint';
 export * from './dataEntregaTipoCompra';
 export * from './mapIncluiSCPayload';
+export * from './validateRateioCC';
 export * from './canAlterSolicitacaoCompra';
 export * from './protheusResult';
 export * from './types/transportadora';

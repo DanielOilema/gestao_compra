@@ -215,6 +215,7 @@ describe("mapFormToAlteraSCPayload", () => {
           quantidade: 12,
           centroCusto: "1101",
           observacao: undefined,
+          placa: "",
           dataEntrega: "2026-08-12",
         },
       ],

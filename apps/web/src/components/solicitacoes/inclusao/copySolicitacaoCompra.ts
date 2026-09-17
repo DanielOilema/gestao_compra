@@ -32,6 +32,7 @@ export const mapPurchaseRequestToInclusaoDraft = (
     centroCustoDescricao: item.descricaoCentroCusto ?? "",
     quantidade: item.quantidade,
     observacao: item.observacao ?? "",
+    placa: "",
     dataEntrega: item.dataEntrega || request.dataCriacao || "",
   })),
 });

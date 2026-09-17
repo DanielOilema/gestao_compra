@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@gestao-compra/ui";
-import type { SolicitacaoItemDraft } from "@gestao-compra/shared";
+import { hasValidRateioCC, type SolicitacaoItemDraft } from "@gestao-compra/shared";
 
 interface SolicitacaoItensTableProps {
   itens: SolicitacaoItemDraft[];
@@ -22,6 +22,22 @@ const formatDataEntrega = (iso: string): string => {
   const [year, month, day] = iso.split("-");
   if (!year || !month || !day) return iso;
   return `${day}/${month}/${year}`;
+};
+
+const formatCentroCusto = (item: SolicitacaoItemDraft) => {
+  if (hasValidRateioCC(item.rateioCC)) {
+    const resumo = item.rateioCC!
+      .map((row) => `${row.cc} (${row.percentual}%)`)
+      .join(" / ");
+    return {
+      title: `Rateio (${item.rateioCC!.length})`,
+      subtitle: resumo,
+    };
+  }
+  return {
+    title: item.centroCusto || "—",
+    subtitle: item.centroCustoDescricao || "",
+  };
 };
 
 const SolicitacaoItensTable: React.FC<SolicitacaoItensTableProps> = ({
@@ -46,50 +62,57 @@ const SolicitacaoItensTable: React.FC<SolicitacaoItensTableProps> = ({
             <TableHead>Centro de Custo</TableHead>
             <TableHead className="w-20 text-right">Qtd</TableHead>
             <TableHead className="w-16">Un.</TableHead>
+            <TableHead className="w-28">Placa</TableHead>
             <TableHead className="w-28">Entrega</TableHead>
             <TableHead>Observação</TableHead>
             <TableHead className="w-24 text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {itens.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>
-                <div className="font-medium">{item.produto}</div>
-                <div className="text-xs text-muted-foreground">{item.produtoDescricao}</div>
-              </TableCell>
-              <TableCell>
-                <div className="font-medium">{item.centroCusto}</div>
-                <div className="text-xs text-muted-foreground">{item.centroCustoDescricao}</div>
-              </TableCell>
-              <TableCell className="text-right">{item.quantidade}</TableCell>
-              <TableCell>{item.unidade}</TableCell>
-              <TableCell>{formatDataEntrega(item.dataEntrega)}</TableCell>
-              <TableCell className="max-w-[200px] truncate">{item.observacao || "—"}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(item)}
-                    aria-label="Editar item"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRemove(item.id)}
-                    aria-label="Remover item"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {itens.map((item) => {
+            const cc = formatCentroCusto(item);
+            return (
+              <TableRow key={item.id}>
+                <TableCell>
+                  <div className="font-medium">{item.produto}</div>
+                  <div className="text-xs text-muted-foreground">{item.produtoDescricao}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium">{cc.title}</div>
+                  {cc.subtitle ? (
+                    <div className="text-xs text-muted-foreground">{cc.subtitle}</div>
+                  ) : null}
+                </TableCell>
+                <TableCell className="text-right">{item.quantidade}</TableCell>
+                <TableCell>{item.unidade}</TableCell>
+                <TableCell>{item.placa?.trim() || "—"}</TableCell>
+                <TableCell>{formatDataEntrega(item.dataEntrega)}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{item.observacao || "—"}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit(item)}
+                      aria-label="Editar item"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemove(item.id)}
+                      aria-label="Remover item"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

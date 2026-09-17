@@ -5,6 +5,15 @@ export const ACAO_ALTERA_SC = "alterar" as const;
 
 export type AcaoSolicitacaoCompra = typeof ACAO_INCLUI_SC | typeof ACAO_ALTERA_SC;
 
+export interface RateioCCPayload {
+  cc: string;
+  percentual: number;
+}
+
+export interface RateioCCDraft extends RateioCCPayload {
+  descricao?: string;
+}
+
 export interface SolicitacaoItemDraft {
   id: string;
   item?: string;
@@ -15,7 +24,9 @@ export interface SolicitacaoItemDraft {
   centroCustoDescricao: string;
   quantidade: number;
   observacao?: string;
+  placa?: string;
   dataEntrega: string;
+  rateioCC?: RateioCCDraft[];
 }
 
 export interface SolicitacaoFormPayload {
@@ -28,8 +39,10 @@ export interface IncluiSCItemPayload {
   item?: string;
   codigoProduto: string;
   quantidade: number;
-  centroCusto: string;
+  centroCusto?: string;
+  rateioCC?: RateioCCPayload[];
   observacao?: string;
+  placa: string;
   dataEntrega: string;
 }
 

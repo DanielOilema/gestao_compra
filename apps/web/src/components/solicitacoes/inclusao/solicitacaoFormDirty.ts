@@ -1,11 +1,13 @@
-import type { SolicitacaoItemDraft } from "@gestao-compra/shared";
+import type { RateioCCDraft, SolicitacaoItemDraft } from "@gestao-compra/shared";
 
 export interface SolicitacaoDraftState {
   produto: string;
   centroCusto: string;
   quantidade: number;
   observacao?: string;
+  placa?: string;
   dataEntrega?: string;
+  rateioCC?: RateioCCDraft[];
 }
 
 export function isSolicitacaoItemObservacaoPreenchida(value?: string): boolean {
@@ -22,11 +24,20 @@ export function isSolicitacaoFormDirty(
   if (tipoCompra.trim()) return true;
   if (itens.length > 0) return true;
   if (draft.produto.trim() || draft.centroCusto.trim()) return true;
+  if (draft.rateioCC && draft.rateioCC.length > 0) return true;
   if (draft.observacao?.trim()) return true;
+  if (draft.placa?.trim()) return true;
   if (draft.dataEntrega?.trim()) return true;
   if (draft.quantidade !== 1) return true;
   return false;
 }
+
+const snapshotRateio = (rateio?: RateioCCDraft[]) =>
+  (rateio ?? []).map((row) => ({
+    cc: row.cc.trim(),
+    percentual: Number(row.percentual),
+    descricao: row.descricao?.trim() ?? "",
+  }));
 
 const snapshotItens = (itens: SolicitacaoItemDraft[]) =>
   itens.map((item) => ({
@@ -38,7 +49,9 @@ const snapshotItens = (itens: SolicitacaoItemDraft[]) =>
     centroCustoDescricao: item.centroCustoDescricao,
     quantidade: item.quantidade,
     observacao: item.observacao?.trim() ?? "",
+    placa: item.placa?.trim() ?? "",
     dataEntrega: item.dataEntrega,
+    rateioCC: snapshotRateio(item.rateioCC),
   }));
 
 export function isItemDraftInProgress(
@@ -46,7 +59,9 @@ export function isItemDraftInProgress(
   defaultDataEntrega = "",
 ): boolean {
   if (draft.produto.trim() || draft.centroCusto.trim()) return true;
+  if (draft.rateioCC && draft.rateioCC.length > 0) return true;
   if (draft.observacao?.trim()) return true;
+  if (draft.placa?.trim()) return true;
   if (draft.quantidade !== 1) return true;
   const entrega = draft.dataEntrega?.trim() ?? "";
   if (entrega && entrega !== defaultDataEntrega.trim()) return true;

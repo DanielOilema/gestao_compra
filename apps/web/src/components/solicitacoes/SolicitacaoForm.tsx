@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Percent, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
   Button,
@@ -14,10 +14,12 @@ import {
   ALTERAR_SOLICITACAO_STATUS_MESSAGE,
   formatNumeroSc,
   getDefaultDataEntrega,
+  hasValidRateioCC,
   isSolicitacaoCompraAlteravelPorStatus,
   mapFormToIncluiSCPayload,
   mapPurchaseRequestToSolicitacaoDraft,
   type PurchaseRequest,
+  type RateioCCDraft,
   type SolicitacaoFormPayload,
   type SolicitacaoItemDraft,
   type TipoCompra,
@@ -30,6 +32,7 @@ import FilialSelect from "./inclusao/FilialSelect";
 import TipoCompraSelect from "./inclusao/TipoCompraSelect";
 import ProdutoCombobox from "./inclusao/ProdutoCombobox";
 import CentroCustoCombobox from "./inclusao/CentroCustoCombobox";
+import RateioCentroCustoDialog from "./inclusao/RateioCentroCustoDialog";
 import SolicitacaoItensTable from "./inclusao/SolicitacaoItensTable";
 import { isSolicitacaoAlterFormDirty, isSolicitacaoFormDirty, isSolicitacaoItemObservacaoPreenchida, type SolicitacaoDraftState } from "./inclusao/solicitacaoFormDirty";
 import {
@@ -41,21 +44,24 @@ import FormField from "@/components/inclusao/FormField";
 import FormSection from "@/components/inclusao/FormSection";
 import { FormGrid, FormGridItem } from "@/components/inclusao/FormGrid";
 
-const itemDraftSchema = z.object({
+const itemDraftBaseSchema = z.object({
   produto: z.string().min(1, "Selecione o produto"),
   produtoDescricao: z.string().min(1, "Selecione o produto"),
   unidade: z.string().min(1, "Unidade obrigatória"),
-  centroCusto: z.string().min(1, "Selecione o centro de custo"),
-  centroCustoDescricao: z.string().min(1, "Selecione o centro de custo"),
+  centroCusto: z.string(),
+  centroCustoDescricao: z.string(),
   quantidade: z.coerce.number().min(1, "Quantidade mínima: 1"),
   observacao: z.string().trim().min(1, "Informe a observação"),
+  placa: z.string(),
   dataEntrega: z
     .string()
     .min(1, "Informe a data de entrega")
     .refine((value) => brDateToIso(value) != null, "Data inválida. Use DD/MM/AAAA"),
 });
 
-type ItemDraftForm = z.infer<typeof itemDraftSchema>;
+type ItemDraftForm = z.infer<typeof itemDraftBaseSchema> & {
+  rateioCC?: RateioCCDraft[];
+};
 
 const emptyDraft = (dataEntregaIso = ""): ItemDraftForm => ({
   produto: "",
@@ -65,7 +71,9 @@ const emptyDraft = (dataEntregaIso = ""): ItemDraftForm => ({
   centroCustoDescricao: "",
   quantidade: 1,
   observacao: "",
+  placa: "",
   dataEntrega: isoToBrDate(dataEntregaIso),
+  rateioCC: undefined,
 });
 
 const createItemId = () =>
@@ -109,11 +117,13 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
   const [draftErrors, setDraftErrors] = React.useState<Partial<Record<keyof ItemDraftForm, string>>>({});
   const [itens, setItens] = React.useState<SolicitacaoItemDraft[]>(initialDraft?.itens ?? []);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [rateioOpen, setRateioOpen] = React.useState(false);
 
   const filialSelected = Boolean(filial);
   const isSubmitting = incluiMutation.isPending;
   const defaultDataEntregaBr = tipoCompra ? isoToBrDate(getDefaultDataEntrega(tipoCompra)) : "";
   const numeroScLabel = alterRequest ? formatNumeroSc(alterRequest.numero) : "";
+  const hasRateio = hasValidRateioCC(draft.rateioCC);
 
   React.useEffect(() => {
     const draftState: SolicitacaoDraftState = {
@@ -121,7 +131,9 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
       centroCusto: draft.centroCusto ?? "",
       quantidade: draft.quantidade ?? 1,
       observacao: draft.observacao,
+      placa: draft.placa,
       dataEntrega: draft.dataEntrega,
+      rateioCC: draft.rateioCC,
     };
     if (isAlter && initialDraft) {
       setIsDirty(
@@ -170,7 +182,7 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
       return;
     }
 
-    const parsed = itemDraftSchema.safeParse(draft);
+    const parsed = itemDraftBaseSchema.safeParse(draft);
     if (!parsed.success) {
       const fieldErrors: Partial<Record<keyof ItemDraftForm, string>> = {};
       for (const issue of parsed.error.issues) {
@@ -179,6 +191,25 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
       }
       setDraftErrors(fieldErrors);
       toast.error("Verifique os campos do item");
+      return;
+    }
+
+    const rateioOk = hasValidRateioCC(draft.rateioCC);
+    if (!rateioOk && !parsed.data.centroCusto.trim()) {
+      setDraftErrors((prev) => ({
+        ...prev,
+        centroCusto: "Informe um centro de custo ou um rateio",
+      }));
+      toast.error("Informe um centro de custo ou um rateio");
+      return;
+    }
+
+    if (!rateioOk && !parsed.data.centroCustoDescricao.trim()) {
+      setDraftErrors((prev) => ({
+        ...prev,
+        centroCusto: "Selecione o centro de custo",
+      }));
+      toast.error("Selecione o centro de custo");
       return;
     }
 
@@ -197,11 +228,13 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
       produto: parsedItem.produto ?? "",
       produtoDescricao: parsedItem.produtoDescricao ?? "",
       unidade: parsedItem.unidade ?? "UN",
-      centroCusto: parsedItem.centroCusto ?? "",
-      centroCustoDescricao: parsedItem.centroCustoDescricao ?? "",
+      centroCusto: rateioOk ? "" : (parsedItem.centroCusto ?? ""),
+      centroCustoDescricao: rateioOk ? "" : (parsedItem.centroCustoDescricao ?? ""),
       quantidade: parsedItem.quantidade ?? 1,
       observacao: parsedItem.observacao,
+      placa: parsedItem.placa?.trim() ?? "",
       dataEntrega: dataEntregaIso,
+      rateioCC: rateioOk ? draft.rateioCC : undefined,
     };
 
     if (editingId) {
@@ -224,7 +257,9 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
       centroCustoDescricao: item.centroCustoDescricao,
       quantidade: item.quantidade,
       observacao: item.observacao ?? "",
+      placa: item.placa ?? "",
       dataEntrega: isoToBrDate(item.dataEntrega),
+      rateioCC: item.rateioCC,
     });
     setEditingId(item.id);
     setDraftErrors({});
@@ -269,6 +304,15 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
 
     if (itens.some((item) => !isSolicitacaoItemObservacaoPreenchida(item.observacao))) {
       toast.error("Há itens sem observação. Edite o item e informe a observação.");
+      return;
+    }
+
+    if (
+      itens.some(
+        (item) => !hasValidRateioCC(item.rateioCC) && !item.centroCusto.trim(),
+      )
+    ) {
+      toast.error("Há itens sem centro de custo ou rateio. Edite o item e complete o rateio.");
       return;
     }
 
@@ -363,22 +407,42 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
           </FormGridItem>
 
           <FormGridItem span={2}>
-            <CentroCustoCombobox
-              value={draft.centroCusto}
-              selectedLabel={
-                draft.centroCusto
-                  ? `${draft.centroCusto} - ${draft.centroCustoDescricao}`
-                  : undefined
-              }
-              onValueChange={(custo, option) => {
-                updateDraft("centroCusto", custo);
-                if (option) {
-                  updateDraft("centroCustoDescricao", option.descricao);
-                }
-              }}
-              disabled={!filialSelected}
-              error={draftErrors.centroCusto}
-            />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1">
+                <CentroCustoCombobox
+                  value={hasRateio ? "" : draft.centroCusto}
+                  selectedLabel={
+                    hasRateio
+                      ? `Rateio (${draft.rateioCC?.length ?? 0} centros)`
+                      : draft.centroCusto
+                        ? `${draft.centroCusto} - ${draft.centroCustoDescricao}`
+                        : undefined
+                  }
+                  onValueChange={(custo, option) => {
+                    setDraft((prev) => ({
+                      ...prev,
+                      centroCusto: custo,
+                      centroCustoDescricao: option?.descricao ?? "",
+                      rateioCC: undefined,
+                    }));
+                    setDraftErrors((prev) => ({ ...prev, centroCusto: undefined }));
+                  }}
+                  disabled={!filialSelected || hasRateio}
+                  required={!hasRateio}
+                  error={draftErrors.centroCusto}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full shrink-0 sm:w-auto"
+                disabled={!filialSelected}
+                onClick={() => setRateioOpen(true)}
+              >
+                <Percent className="mr-2 h-4 w-4" />
+                Rateio
+              </Button>
+            </div>
           </FormGridItem>
 
           <FormField label="Quantidade" htmlFor="quantidade" required error={draftErrors.quantidade}>
@@ -389,6 +453,16 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
               value={draft.quantidade}
               disabled={!filialSelected}
               onChange={(e) => updateDraft("quantidade", Number(e.target.value))}
+            />
+          </FormField>
+
+          <FormField label="Placa" htmlFor="placa" error={draftErrors.placa}>
+            <Input
+              id="placa"
+              value={draft.placa ?? ""}
+              disabled={!filialSelected}
+              placeholder="Placa do veículo"
+              onChange={(e) => updateDraft("placa", e.target.value.toUpperCase())}
             />
           </FormField>
 
@@ -469,6 +543,28 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
           )}
         </Button>
       </div>
+
+      <RateioCentroCustoDialog
+        open={rateioOpen}
+        onOpenChange={setRateioOpen}
+        value={draft.rateioCC}
+        disabled={!filialSelected}
+        onConfirm={(rateio) => {
+          setDraft((prev) => ({
+            ...prev,
+            rateioCC: rateio,
+            centroCusto: "",
+            centroCustoDescricao: "",
+          }));
+          setDraftErrors((prev) => ({ ...prev, centroCusto: undefined }));
+        }}
+        onClear={() => {
+          setDraft((prev) => ({
+            ...prev,
+            rateioCC: undefined,
+          }));
+        }}
+      />
     </form>
   );
 };
