@@ -21,7 +21,19 @@ flowchart TD
 
 ---
 
-## 1. Deploy de produção (Vercel)
+## 1. Deploy de produção (Docker)
+
+O PWA é uma imagem multi-stage: Node 20 faz o build do Vite e o nginx 1.27 serve os arquivos estáticos na porta 80. As variáveis do Supabase entram no build (o bundle do Vite as embute).
+
+Na raiz do repositório, com `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no ambiente ou num arquivo `.env` ao lado do compose:
+
+```bash
+docker compose up -d --build
+```
+
+A aplicação fica em `http://localhost:8080`. Em `protheus.oilema.tec.br` essa mesma imagem roda atrás do Caddy, no container `oilema-gestao-compra`.
+
+## 2. Deploy de produção (Vercel)
 
 ### Pré-requisitos
 
@@ -74,7 +86,7 @@ Após o deploy, abra a URL HTTPS e valide:
 
 ---
 
-## 2. PWABuilder — pacote Android (TWA)
+## 3. PWABuilder — pacote Android (TWA)
 
 Gera APK/AAB que abre sua PWA em tela cheia (Trusted Web Activity).  
 **Requer a URL de produção já no ar.**
@@ -116,7 +128,7 @@ npx @bubblewrap/cli build
 
 ---
 
-## 3. Capacitor — Android e iOS
+## 4. Capacitor — Android e iOS
 
 Empacota o conteúdo de `dist/` em projetos nativos. Útil quando precisa de APIs nativas ou App Store.
 
