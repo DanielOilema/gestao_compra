@@ -1,4 +1,5 @@
 import { Order, OrderItem } from './types/order';
+import { mapProtheusTipoCompra } from './tipoCompra';
 
 interface ProtheusItem {
   produto: string;
@@ -23,6 +24,9 @@ interface ProtheusPedido {
   total: number;
   itens: ProtheusItem[];
   logAprova?: string;
+  tipoCompra?: string | number;
+  tipocompra?: string | number;
+  tpcompra?: string | number;
 }
 
 export interface ProtheusPedidosResponse {
@@ -70,6 +74,7 @@ export const mapProtheusPedido = (p: ProtheusPedido): Order => {
   });
 
   const solicitante = t(p.itens?.[0]?.solicitante) || '-';
+  const tipoCompra = mapProtheusTipoCompra(p.tipoCompra ?? p.tipocompra ?? p.tpcompra);
 
   return {
     id: `${filial}-${numero}`,
@@ -84,6 +89,7 @@ export const mapProtheusPedido = (p: ProtheusPedido): Order => {
     status: 'pending',
     itens,
     logAprova: t(p.logAprova) || undefined,
+    tipoCompra,
   };
 };
 

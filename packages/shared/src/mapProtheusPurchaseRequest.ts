@@ -1,6 +1,13 @@
 import type { PurchaseRequest, PurchaseRequestItem } from './types/purchaseRequest';
+import type { RateioCCDraft } from './types/solicitacaoInclusao';
 import { mapProtheusSolicitacaoCompraStatus } from './solicitacaoCompraStatus';
 import { mapProtheusTipoCompra, type TipoCompra } from './tipoCompra';
+
+export interface ProtheusListaSCRateioLine {
+  item?: string;
+  cc?: string;
+  percentual?: number | string;
+}
 
 export interface ProtheusListaSCLine {
   filial?: string;
@@ -27,6 +34,7 @@ export interface ProtheusListaSCLine {
   dataEntrega?: string;
   datprf?: string;
   dtentrega?: string;
+  rateio?: ProtheusListaSCRateioLine[];
 }
 
 const t = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
@@ -154,8 +162,54 @@ const readCentroCusto = (line: ProtheusListaSCLine): { codigo: string; descricao
   return { codigo: codigoAlt, descricao: descricaoAlt };
 };
 
+const readRateioArray = (line: ProtheusListaSCLine): unknown[] | undefined => {
+  if (Array.isArray(line.rateio)) return line.rateio;
+
+  const record = line as Record<string, unknown>;
+  for (const [key, value] of Object.entries(record)) {
+    if (key.toLowerCase() !== 'rateio') continue;
+    if (Array.isArray(value)) return value;
+  }
+  return undefined;
+};
+
+/** Lê `rateio` da linha da listagem e mapeia para RateioCCDraft[]. */
+export const readRateio = (line: ProtheusListaSCLine): RateioCCDraft[] | undefined => {
+  const raw = readRateioArray(line);
+  if (!raw || raw.length === 0) return undefined;
+
+  const mapped: RateioCCDraft[] = [];
+  for (const entry of raw) {
+    if (!isPlainObject(entry)) continue;
+    const cc = t(entry.cc);
+    const percentual = Number(entry.percentual);
+    if (!cc || !Number.isFinite(percentual)) continue;
+    mapped.push({ cc, percentual });
+  }
+
+  return mapped.length > 0 ? mapped : undefined;
+};
+
 const mapLineToItem = (line: ProtheusListaSCLine, filial: string, numero: string): PurchaseRequestItem => {
   const item = t(line.item) || '0001';
+  const rateioCC = readRateio(line);
+
+  if (rateioCC) {
+    return {
+      id: `${filial}-${numero}-${item}`,
+      item,
+      produto: t(line.produto),
+      unidade: t(line.unidade) || t(line.unid) || 'UN',
+      descricao: t(line.descricao),
+      quantidade: Number(line.quant ?? line.quantidade) || 0,
+      valorEstimado: 0,
+      observacao: t(line.obs) || t(line.observacao) || undefined,
+      rateioCC,
+      dataEntrega: readLineDataEntrega(line),
+      status: resolveLineStatus(line),
+    };
+  }
+
   const centroCusto = readCentroCusto(line);
   return {
     id: `${filial}-${numero}-${item}`,

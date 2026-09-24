@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@gestao-compra/ui";
 import { LogOut, Shield } from "lucide-react";
+import HomologacaoBanner from "@/components/navigation/HomologacaoBanner";
 import logocinza from "@/assets/logocinza.png";
 
 const Header: React.FC = () => {
@@ -30,6 +31,7 @@ const Header: React.FC = () => {
   const canManagePermissions = hasPermission("gestao-permissoes");
   const menuVisible = isMobile ? openMobile : open;
   const menuLabel = menuVisible ? "Ocultar menu" : "Mostrar menu";
+  const showHomologacaoBanner = Boolean(user) && !isProducao;
 
   const displayName = user?.nome?.trim() || user?.userName?.trim() || "Usuário";
 
@@ -53,11 +55,11 @@ const Header: React.FC = () => {
       <div
         className={
           !isMobile && !open
-            ? "container mx-auto flex h-full items-center px-3 py-2 sm:px-4 sm:py-3 md:py-0 md:pl-14"
-            : "container mx-auto flex h-full items-center px-3 py-2 sm:px-4 sm:py-3 md:py-0"
+            ? "container mx-auto flex h-full flex-col justify-center px-3 py-2 sm:px-4 sm:py-3 md:py-0 md:pl-14"
+            : "container mx-auto flex h-full flex-col justify-center px-3 py-2 sm:px-4 sm:py-3 md:py-0"
         }
       >
-        <div className="flex w-full items-center justify-between gap-2">
+        <div className="relative flex w-full items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <SidebarTrigger
               className="text-secondary-foreground hover:bg-secondary-foreground/10 md:hidden"
@@ -72,6 +74,10 @@ const Header: React.FC = () => {
               </div>
             </Link>
           </div>
+
+          {showHomologacaoBanner && (
+            <HomologacaoBanner className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 sm:inline-flex" />
+          )}
 
           {user && (
             <DropdownMenu>
@@ -146,6 +152,11 @@ const Header: React.FC = () => {
             </DropdownMenu>
           )}
         </div>
+        {showHomologacaoBanner && (
+          <div className="mt-2 flex justify-center sm:hidden">
+            <HomologacaoBanner />
+          </div>
+        )}
       </div>
     </header>
   );

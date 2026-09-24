@@ -37,3 +37,19 @@ export const mapProtheusTipoCompra = (raw?: string | number): TipoCompra | undef
   if (key.includes("regulariza")) return "4";
   return undefined;
 };
+
+/**
+ * Prioridade de exibição na aprovação de SC:
+ * Urgente → Normal → Imediato/Direto e Regulariza → desconhecido.
+ */
+export const getTipoCompraPrioridade = (tipoCompra?: TipoCompra | null): number => {
+  if (tipoCompra === "2") return 0;
+  if (tipoCompra === "1") return 1;
+  if (tipoCompra === "3" || tipoCompra === "4") return 2;
+  return 3;
+};
+
+export const compareByTipoCompraPrioridade = (
+  a?: TipoCompra | null,
+  b?: TipoCompra | null,
+): number => getTipoCompraPrioridade(a) - getTipoCompraPrioridade(b);

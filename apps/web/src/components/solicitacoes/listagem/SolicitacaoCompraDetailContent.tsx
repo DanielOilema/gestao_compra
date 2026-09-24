@@ -5,6 +5,7 @@ import {
   ALTERAR_SOLICITACAO_STATUS_MESSAGE,
   formatNumeroSc,
   getFilialState,
+  hasValidRateioCC,
   isSolicitacaoCompraAlteravelPorStatus,
 } from "@gestao-compra/shared";
 import {
@@ -23,6 +24,7 @@ import {
 import { ArrowLeft, FileText, Calendar, Package, User, Pencil, Copy } from "lucide-react";
 import StatusBadge from "@/components/shared/StatusBadge";
 import type { NovaSolicitacaoLocationState } from "@/components/solicitacoes/inclusao/copySolicitacaoCompra";
+import SolicitacaoCompraLogAprovacao from "./SolicitacaoCompraLogAprovacao";
 
 interface SolicitacaoCompraDetailContentProps {
   request: PurchaseRequest;
@@ -43,6 +45,22 @@ const formatItemObservacao = (item: PurchaseRequestItem): string => {
     parts.push(formatCurrency(item.valorEstimado));
   }
   return parts.length ? parts.join(" | ") : "-";
+};
+
+const formatCentroCusto = (item: PurchaseRequestItem) => {
+  if (hasValidRateioCC(item.rateioCC)) {
+    const resumo = item.rateioCC!
+      .map((row) => `${row.cc} (${row.percentual}%)`)
+      .join(" / ");
+    return {
+      title: `Rateio (${item.rateioCC!.length})`,
+      subtitle: resumo,
+    };
+  }
+  return {
+    title: item.codigoCentroCusto || "-",
+    subtitle: item.descricaoCentroCusto || "",
+  };
 };
 
 const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentProps> = ({
@@ -126,7 +144,9 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
         </CardHeader>
         <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <div className="space-y-3 sm:hidden">
-            {request.itens.map((item) => (
+            {request.itens.map((item) => {
+              const cc = formatCentroCusto(item);
+              return (
               <div key={item.id} className="bg-muted/50 rounded-lg p-3 space-y-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Produto</p>
@@ -139,19 +159,18 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Centro de Custo</p>
-                  <p className="font-medium text-sm text-foreground">
-                    {item.codigoCentroCusto || "-"}
-                  </p>
-                  {item.descricaoCentroCusto && (
-                    <p className="text-xs text-muted-foreground">{item.descricaoCentroCusto}</p>
-                  )}
+                  <p className="font-medium text-sm text-foreground">{cc.title}</p>
+                  {cc.subtitle ? (
+                    <p className="text-xs text-muted-foreground">{cc.subtitle}</p>
+                  ) : null}
                 </div>
                 <div className="pt-1 border-t border-border">
                   <p className="text-xs text-muted-foreground">Observação</p>
                   <p className="text-xs text-muted-foreground">{formatItemObservacao(item)}</p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="hidden sm:block overflow-x-auto">
@@ -165,7 +184,9 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {request.itens.map((item) => (
+                {request.itens.map((item) => {
+                  const cc = formatCentroCusto(item);
+                  return (
                   <TableRow key={item.id}>
                     <TableCell>
                       <div>
@@ -175,12 +196,10 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
                     </TableCell>
                     <TableCell className="text-right font-medium">{item.quantidade}</TableCell>
                     <TableCell>
-                      <p className="font-medium text-foreground">
-                        {item.codigoCentroCusto || "-"}
-                      </p>
-                      {item.descricaoCentroCusto && (
-                        <p className="text-sm text-muted-foreground">{item.descricaoCentroCusto}</p>
-                      )}
+                      <p className="font-medium text-foreground">{cc.title}</p>
+                      {cc.subtitle ? (
+                        <p className="text-sm text-muted-foreground">{cc.subtitle}</p>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
@@ -188,7 +207,8 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
                       </span>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -212,6 +232,11 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
           Alterar
         </Button>
       </div>
+
+      <SolicitacaoCompraLogAprovacao
+        filial={request.filial}
+        numDoc={formatNumeroSc(request.numero)}
+      />
     </div>
   );
 };

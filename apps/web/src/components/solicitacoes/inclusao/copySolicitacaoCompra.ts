@@ -23,16 +23,28 @@ export const mapPurchaseRequestToInclusaoDraft = (
 ): SolicitacaoInclusaoDraft => ({
   filial: request.filial,
   tipoCompra: request.tipoCompra ?? "",
-  itens: request.itens.map((item) => ({
-    id: newDraftItemId(),
-    produto: item.produto,
-    produtoDescricao: item.descricao,
-    unidade: item.unidade || "UN",
-    centroCusto: item.codigoCentroCusto ?? "",
-    centroCustoDescricao: item.descricaoCentroCusto ?? "",
-    quantidade: item.quantidade,
-    observacao: item.observacao ?? "",
-    placa: "",
-    dataEntrega: item.dataEntrega || request.dataCriacao || "",
-  })),
+  itens: request.itens.map((item) => {
+    const hasRateio = Boolean(item.rateioCC && item.rateioCC.length > 0);
+    return {
+      id: newDraftItemId(),
+      produto: item.produto,
+      produtoDescricao: item.descricao,
+      unidade: item.unidade || "UN",
+      centroCusto: hasRateio ? "" : (item.codigoCentroCusto ?? ""),
+      centroCustoDescricao: hasRateio ? "" : (item.descricaoCentroCusto ?? ""),
+      quantidade: item.quantidade,
+      observacao: item.observacao ?? "",
+      placa: "",
+      dataEntrega: item.dataEntrega || request.dataCriacao || "",
+      ...(hasRateio
+        ? {
+            rateioCC: item.rateioCC!.map((row) => ({
+              cc: row.cc.trim(),
+              percentual: Number(row.percentual),
+              descricao: row.descricao,
+            })),
+          }
+        : {}),
+    };
+  }),
 });

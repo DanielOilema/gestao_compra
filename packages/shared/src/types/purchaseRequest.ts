@@ -1,4 +1,5 @@
 import type { SolicitacaoCompraProtheusStatus } from "../solicitacaoCompraStatus";
+import type { RateioCCDraft } from "./solicitacaoInclusao";
 import type { TipoCompra } from "../tipoCompra";
 
 export type PurchaseRequestStatus =
@@ -20,6 +21,7 @@ export interface PurchaseRequestItem {
   observacao?: string;
   codigoCentroCusto?: string;
   descricaoCentroCusto?: string;
+  rateioCC?: RateioCCDraft[];
   dataEntrega?: string;
   status?: SolicitacaoCompraProtheusStatus;
 }

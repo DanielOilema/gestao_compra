@@ -10,6 +10,15 @@ import SolicitacaoCompraDetailContent from "@/components/solicitacoes/listagem/S
 
 const navigate = vi.fn();
 
+vi.mock("@/hooks/useLogAprovacao", () => ({
+  useLogAprovacao: () => ({
+    data: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+  }),
+}));
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
   return {
@@ -86,6 +95,31 @@ describe("mapPurchaseRequestToInclusaoDraft", () => {
     );
 
     expect(draft.itens[0].dataEntrega).toBe("2026-08-01");
+  });
+
+  it("preserves rateioCC and clears single cost center on copy draft", () => {
+    const draft = mapPurchaseRequestToInclusaoDraft(
+      baseRequest({
+        itens: [
+          {
+            ...baseRequest().itens[0],
+            codigoCentroCusto: undefined,
+            descricaoCentroCusto: undefined,
+            rateioCC: [
+              { cc: "1701001", percentual: 10 },
+              { cc: "3101001", percentual: 90 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(draft.itens[0].centroCusto).toBe("");
+    expect(draft.itens[0].centroCustoDescricao).toBe("");
+    expect(draft.itens[0].rateioCC).toEqual([
+      { cc: "1701001", percentual: 10 },
+      { cc: "3101001", percentual: 90 },
+    ]);
   });
 
   it("maps the copied draft into an include payload without original identities", () => {

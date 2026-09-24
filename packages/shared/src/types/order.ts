@@ -1,3 +1,5 @@
+import type { TipoCompra } from '../tipoCompra';
+
 export type OrderStatus = 'pending' | 'blocked' | 'approved';
 
 export interface OrderItem {
@@ -28,6 +30,8 @@ export interface Order {
   itens: OrderItem[];
   observacaoGeral?: string;
   logAprova?: string;
+  /** Tipo de compra da SC (aprovação); ausente em pedidos. */
+  tipoCompra?: TipoCompra;
 }
 
 export interface OrderSummary {

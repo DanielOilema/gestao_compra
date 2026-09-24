@@ -1,4 +1,5 @@
 import { Order, OrderItem } from './types/order';
+import { mapProtheusTipoCompra } from './tipoCompra';
 
 interface ProtheusSCItem {
   produto?: string;
@@ -22,6 +23,9 @@ interface ProtheusSC {
   userLgi?: string;
   comprador?: string;
   logAprova?: string;
+  tipoCompra?: string | number;
+  tipocompra?: string | number;
+  tpcompra?: string | number;
   itens?: ProtheusSCItem[];
 }
 
@@ -64,6 +68,10 @@ export const mapProtheusSC = (s: ProtheusSC): Order => {
     t(s.itens?.[0]?.solicitante) ||
     '';
 
+  const tipoCompra = mapProtheusTipoCompra(
+    s.tipoCompra ?? s.tipocompra ?? s.tpcompra,
+  );
+
   return {
     id: `SC-${filial}-${numero}`,
     numero,
@@ -77,6 +85,7 @@ export const mapProtheusSC = (s: ProtheusSC): Order => {
     status: 'pending',
     itens,
     logAprova: t(s.logAprova) || undefined,
+    tipoCompra,
   };
 };
 

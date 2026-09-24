@@ -21,6 +21,7 @@ export * from './types/solicitacaoInclusao';
 export * from './mapProtheusOrder';
 export * from './mapProtheusSolicitation';
 export * from './mapProtheusPurchaseRequest';
+export * from './mapProtheusLogAprovacao';
 export * from './mapProtheusFiliais';
 export * from './mapProtheusProduto';
 export * from './mapProtheusCcusto';

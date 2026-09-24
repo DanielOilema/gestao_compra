@@ -177,6 +177,31 @@ describe("mapPurchaseRequestToSolicitacaoDraft", () => {
     );
     expect(draft.itens[0].dataEntrega).toBe("2026-08-01");
   });
+
+  it("preserves rateioCC and clears single cost center on alter draft", () => {
+    const draft = mapPurchaseRequestToSolicitacaoDraft(
+      baseRequest({
+        itens: [
+          {
+            ...baseRequest().itens[0],
+            codigoCentroCusto: undefined,
+            descricaoCentroCusto: undefined,
+            rateioCC: [
+              { cc: "1701001", percentual: 10 },
+              { cc: "3101001", percentual: 90 },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(draft.itens[0].centroCusto).toBe("");
+    expect(draft.itens[0].centroCustoDescricao).toBe("");
+    expect(draft.itens[0].rateioCC).toEqual([
+      { cc: "1701001", percentual: 10 },
+      { cc: "3101001", percentual: 90 },
+    ]);
+  });
 });
 
 describe("mapFormToAlteraSCPayload", () => {
@@ -247,6 +272,48 @@ describe("mapFormToAlteraSCPayload", () => {
     expect(payload.acao).toBe("alterar");
     expect(payload.numeroSC).toBe("000123");
   });
+
+  it("sends rateioCC and omits centroCusto on alter when rateio is present", () => {
+    const payload = mapFormToAlteraSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "1",
+        itens: [
+          {
+            produto: "9899000009",
+            produtoDescricao: "PLANO",
+            unidade: "UN",
+            centroCusto: "",
+            centroCustoDescricao: "",
+            quantidade: 10,
+            observacao: "TESTE",
+            dataEntrega: "2026-09-22",
+            item: "0001",
+            rateioCC: [
+              { cc: "1701001", percentual: 10 },
+              { cc: "3101001", percentual: 90 },
+            ],
+          },
+        ],
+      },
+      "Administrador",
+      "010145",
+    );
+
+    expect(payload.itens[0]).toEqual({
+      item: "0001",
+      codigoProduto: "9899000009",
+      quantidade: 10,
+      observacao: "TESTE",
+      placa: "",
+      dataEntrega: "2026-09-22",
+      rateioCC: [
+        { cc: "1701001", percentual: 10 },
+        { cc: "3101001", percentual: 90 },
+      ],
+    });
+    expect(payload.itens[0]).not.toHaveProperty("centroCusto");
+  });
 });
 
 describe("mapProtheusTipoCompra", () => {
@@ -278,6 +345,57 @@ describe("mapProtheusListaSolicitacoesResponse", () => {
 
     expect(mapped.requests[0].tipoCompra).toBe("2");
     expect(mapped.requests[0].itens[0].dataEntrega).toBe("2026-08-20");
+  });
+
+  it("maps rateio from list lines and trims padded cost centers", () => {
+    const mapped = mapProtheusListaSolicitacoesResponse({
+      SOLICITACOES: [
+        {
+          filial: "0101",
+          numero: "010145",
+          item: "0001",
+          produto: "9899000009",
+          descricao: "PLANO DE SAUDE BRADESCO",
+          quant: 10,
+          desccc: "",
+          obs: "TESTE",
+          solicitante: "Administrador",
+          emissao: "2026/09/22",
+          status: "Bloqueada",
+          rateio: [
+            { item: "0001", cc: "1701001       ", percentual: 10 },
+            { item: "0001", cc: "3101001       ", percentual: 90 },
+          ],
+        },
+        {
+          filial: "0101",
+          numero: "010144",
+          item: "0001",
+          produto: "9701000188",
+          descricao: "COMBUSTÍVEL",
+          quant: 1,
+          cc: "3101001",
+          desccc: "UBS BA - PLACAS - SO",
+          obs: "TESTE",
+          solicitante: "Administrador",
+          emissao: "2026/09/22",
+          status: "Bloqueada",
+        },
+      ],
+    });
+
+    const withRateio = mapped.requests.find((r) => r.numero === "010145")!;
+    expect(withRateio.itens[0].rateioCC).toEqual([
+      { cc: "1701001", percentual: 10 },
+      { cc: "3101001", percentual: 90 },
+    ]);
+    expect(withRateio.itens[0].codigoCentroCusto).toBeUndefined();
+    expect(withRateio.itens[0].descricaoCentroCusto).toBeUndefined();
+
+    const withCc = mapped.requests.find((r) => r.numero === "010144")!;
+    expect(withCc.itens[0].rateioCC).toBeUndefined();
+    expect(withCc.itens[0].codigoCentroCusto).toBe("3101001");
+    expect(withCc.itens[0].descricaoCentroCusto).toBe("UBS BA - PLACAS - SO");
   });
 });
 

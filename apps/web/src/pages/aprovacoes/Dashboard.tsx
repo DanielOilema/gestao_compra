@@ -4,11 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import OrderDetail from "@/components/OrderDetail";
-import PedidoList from "@/components/PedidoList";
-import SolicitacaoList from "@/components/SolicitacaoList";
 import OrderSearchBar from "@/components/OrderSearchBar";
 import AprovacaoCategoryCard from "@/components/aprovacoes/AprovacaoCategoryCard";
-import { Order } from "@gestao-compra/shared";
+import PedidoAprovacaoList from "@/components/aprovacoes/PedidoAprovacaoList";
+import SolicitacaoAprovacaoList from "@/components/aprovacoes/SolicitacaoAprovacaoList";
+import { Order, compareByTipoCompraPrioridade } from "@gestao-compra/shared";
 import { Button, cn } from "@gestao-compra/ui";
 import { ShoppingCart, FileText, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -62,18 +62,23 @@ const Dashboard: React.FC = () => {
 
   const filteredPedidos = useMemo(() => {
     const q = pedidoSearch.trim().toLowerCase();
-    if (!q) return uniquePedidos;
-    return uniquePedidos.filter(
-      (o) => o.numero.toLowerCase().includes(q) || (o.fornecedor || "").toLowerCase().includes(q),
-    );
+    const filtered = !q
+      ? uniquePedidos
+      : uniquePedidos.filter(
+          (o) => o.numero.toLowerCase().includes(q) || (o.fornecedor || "").toLowerCase().includes(q),
+        );
+    return [...filtered].sort((a, b) => compareByTipoCompraPrioridade(a.tipoCompra, b.tipoCompra));
   }, [uniquePedidos, pedidoSearch]);
 
   const filteredSolicitacoes = useMemo(() => {
     const q = solicitacaoSearch.trim().toLowerCase();
-    if (!q) return uniqueSolicitacoes;
-    return uniqueSolicitacoes.filter(
-      (o) => o.numero.toLowerCase().includes(q) || (o.solicitante || "").toLowerCase().includes(q),
-    );
+    const filtered = !q
+      ? uniqueSolicitacoes
+      : uniqueSolicitacoes.filter(
+          (o) =>
+            o.numero.toLowerCase().includes(q) || (o.solicitante || "").toLowerCase().includes(q),
+        );
+    return [...filtered].sort((a, b) => compareByTipoCompraPrioridade(a.tipoCompra, b.tipoCompra));
   }, [uniqueSolicitacoes, solicitacaoSearch]);
 
   const activeList = selectedCategory === "pedidos" ? filteredPedidos : filteredSolicitacoes;
@@ -166,9 +171,13 @@ const Dashboard: React.FC = () => {
                 Carregando {selectedCategory === "pedidos" ? "pedidos" : "solicitações"}...
               </div>
             ) : selectedCategory === "pedidos" ? (
-              <PedidoList key="pedidos" orders={filteredPedidos} onSelectOrder={setSelectedOrder} />
+              <PedidoAprovacaoList key="pedidos" orders={filteredPedidos} onSelectOrder={setSelectedOrder} />
             ) : (
-              <SolicitacaoList key="solicitacoes" orders={filteredSolicitacoes} onSelectOrder={setSelectedOrder} />
+              <SolicitacaoAprovacaoList
+                key="solicitacoes"
+                orders={filteredSolicitacoes}
+                onSelectOrder={setSelectedOrder}
+              />
             )}
           </div>
         </div>

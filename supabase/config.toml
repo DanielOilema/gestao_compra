@@ -81,6 +81,9 @@ verify_jwt = false
 [functions.protheus-busca-municipio]
 verify_jwt = false
 
+[functions.protheus-log-aprovacao]
+verify_jwt = false
+
 [functions.permissoes-por-usuario]
 verify_jwt = false
 
