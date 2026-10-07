@@ -1,26 +1,22 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { PurchaseRequest, SolicitacaoCompraRow } from "@gestao-compra/shared";
-import {
-  ALTERAR_SOLICITACAO_SELECIONE_MESSAGE,
-  ALTERAR_SOLICITACAO_STATUS_MESSAGE,
-  flattenPurchaseRequests,
-  isSolicitacaoCompraAlteravelPorStatus,
-} from "@gestao-compra/shared";
+import { flattenPurchaseRequests } from "@gestao-compra/shared";
 import {
   emptySolicitacaoCompraListFilters,
   type SolicitacaoCompraListFilters,
 } from "./solicitacaoCompraListFilters";
 import {
+  getSolicitacaoCompraCompleta,
   getSolicitacoesCompra,
   SOLICITACOES_PAGE_SIZE,
 } from "@/hooks/getSolicitacoesCompra";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useSolicitacaoCompraList() {
-  const { protheusAuth } = useAuth();
-  const navigate = useNavigate();
+  const { protheusAuth, user } = useAuth();
+  const codUser = user?.protheusId?.trim() || user?.id?.trim() || "";
+  const nomeUser = user?.userName?.trim() || "";
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftFilters, setDraftFilters] = useState<SolicitacaoCompraListFilters>(
     emptySolicitacaoCompraListFilters(),
@@ -34,6 +30,11 @@ export function useSolicitacaoCompraList() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [detailRequest, setDetailRequest] = useState<PurchaseRequest | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const detailToken = useRef(0);
+  const detailSource = useRef<PurchaseRequest | null>(null);
 
   const loadData = useCallback(
     async (filters: SolicitacaoCompraListFilters, targetPage: number) => {
@@ -46,6 +47,8 @@ export function useSolicitacaoCompraList() {
           page: targetPage,
           pageSize: SOLICITACOES_PAGE_SIZE,
           basicAuth: protheusAuth,
+          codUser,
+          nomeUser,
         });
         setRequests(result.requests);
         setHasNextPage(result.hasNextPage);
@@ -62,7 +65,7 @@ export function useSolicitacaoCompraList() {
         setIsLoading(false);
       }
     },
-    [protheusAuth],
+    [protheusAuth, codUser, nomeUser],
   );
 
   useEffect(() => {
@@ -75,16 +78,6 @@ export function useSolicitacaoCompraList() {
     () => flattenPurchaseRequests(requests),
     [requests],
   );
-
-  const selectedRow = useMemo(
-    () => filteredRows.find((r) => r.rowId === selectedRowId) ?? null,
-    [filteredRows, selectedRowId],
-  );
-
-  const selectedRequest = useMemo(() => {
-    if (!selectedRow) return null;
-    return requests.find((r) => r.id === selectedRow.requestId) ?? null;
-  }, [requests, selectedRow]);
 
   const hasPreviousPage = page > 1;
 
@@ -106,36 +99,61 @@ export function useSolicitacaoCompraList() {
     void loadData(appliedFilters, page - 1);
   }, [page, isLoading, appliedFilters, loadData]);
 
-  const handleSelectRow = useCallback((row: SolicitacaoCompraRow) => {
-    setSelectedRowId(row.rowId);
-    setDetailOpen(true);
-  }, []);
+  const loadDetail = useCallback(
+    (request: PurchaseRequest) => {
+      if (!protheusAuth) return;
+      const token = detailToken.current + 1;
+      detailToken.current = token;
+      detailSource.current = request;
+      setDetailOpen(true);
+      setDetailRequest(null);
+      setDetailError(null);
+      setDetailLoading(true);
 
-  const handleVisualizar = useCallback(() => {
-    if (!selectedRequest) return false;
-    setDetailOpen(true);
-    return true;
-  }, [selectedRequest]);
+      void getSolicitacaoCompraCompleta({
+        filial: request.filial,
+        numero: request.numero,
+        basicAuth: protheusAuth,
+        codUser,
+        nomeUser,
+      })
+        .then((full) => {
+          if (detailToken.current !== token) return;
+          setDetailRequest(full);
+        })
+        .catch((err: unknown) => {
+          if (detailToken.current !== token) return;
+          const message =
+            err instanceof Error ? err.message : "Erro ao carregar a solicitação";
+          setDetailError(message);
+          toast.error(message);
+        })
+        .finally(() => {
+          if (detailToken.current === token) setDetailLoading(false);
+        });
+    },
+    [protheusAuth, codUser, nomeUser],
+  );
 
-  const handleAlterar = useCallback(() => {
-    if (!selectedRequest) {
-      toast.warning(ALTERAR_SOLICITACAO_SELECIONE_MESSAGE);
-      return false;
-    }
-
-    if (!isSolicitacaoCompraAlteravelPorStatus(selectedRequest)) {
-      toast.warning(ALTERAR_SOLICITACAO_STATUS_MESSAGE);
-      return false;
-    }
-
-    setDetailOpen(false);
-    navigate("/solicitacoes-compra/nova", { state: { alterFrom: selectedRequest } });
-    return true;
-  }, [navigate, selectedRequest]);
+  const handleSelectRow = useCallback(
+    (row: SolicitacaoCompraRow) => {
+      setSelectedRowId(row.rowId);
+      const request = requests.find((item) => item.id === row.requestId);
+      if (request) loadDetail(request);
+    },
+    [loadDetail, requests],
+  );
 
   const handleCloseDetail = useCallback(() => {
+    detailToken.current += 1;
     setDetailOpen(false);
+    setDetailLoading(false);
+    setDetailError(null);
   }, []);
+
+  const handleRetryDetail = useCallback(() => {
+    if (detailSource.current) loadDetail(detailSource.current);
+  }, [loadDetail]);
 
   return {
     filtersOpen,
@@ -148,17 +166,17 @@ export function useSolicitacaoCompraList() {
     hasNextPage,
     hasPreviousPage,
     selectedRowId,
-    selectedRow,
-    selectedRequest,
     filteredRows,
     detailOpen,
+    detailRequest,
+    detailLoading,
+    detailError,
     toggleFilters,
     handleBuscar,
     handleNextPage,
     handlePreviousPage,
     handleSelectRow,
-    handleVisualizar,
-    handleAlterar,
     handleCloseDetail,
+    handleRetryDetail,
   };
 }

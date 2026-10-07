@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@gestao-compra/ui";
 import { Download, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { cn } from "@gestao-compra/ui";
 import { toast } from "sonner";
 import type { ExportPayload } from "@/lib/export/types";
 
@@ -20,12 +21,14 @@ interface ExportMenuProps {
   getPayload: () => ExportPayload | Promise<ExportPayload>;
   disabled?: boolean;
   label?: string;
+  className?: string;
 }
 
 const ExportMenu: React.FC<ExportMenuProps> = ({
   getPayload,
   disabled = false,
   label = "Exportar",
+  className,
 }) => {
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
 
@@ -69,7 +72,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled || isExporting}>
+        <Button variant="outline" size="sm" className={cn(className)} disabled={disabled || isExporting}>
           {isExporting ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

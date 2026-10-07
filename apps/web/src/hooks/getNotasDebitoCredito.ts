@@ -47,6 +47,7 @@ export async function getNotasDebitoCredito({
             ? "D"
             : "",
       cliFor: filters.cliFor.trim() || undefined,
+      usuario: filters.usuario.trim() || undefined,
       filtro: filtro || undefined,
       dtInicial: dtInicial || undefined,
       dtFinal: dtFinal || undefined,

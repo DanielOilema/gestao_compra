@@ -1,11 +1,14 @@
 import {
+  formatFilialLabel,
+  formatNumeroSc,
   getSolicitacaoCompraStatusLabel,
+  mapProtheusSolicitacaoCompraStatus,
+  type PurchaseRequest,
   type ReportColumn,
   type ReportRow,
-  type SolicitacaoCompraRow,
+  type SolicitacaoCompraProtheusStatus,
 } from "@gestao-compra/shared";
 import type { ExportPayload } from "@/lib/export/types";
-import type { SolicitacaoCompraListFilters } from "./solicitacaoCompraListFilters";
 
 const COLUNAS: ReportColumn[] = [
   { key: "filial", label: "Filial", formato: "texto", largura: 26 },
@@ -18,49 +21,39 @@ const COLUNAS: ReportColumn[] = [
   { key: "status", label: "Status", formato: "texto", largura: 22 },
   { key: "solicitante", label: "Solicitante", formato: "texto", largura: 26 },
   { key: "dataCriacao", label: "Data", formato: "data", largura: 14 },
+  { key: "observacao", label: "Observação", formato: "texto", largura: 40 },
 ];
 
-const FILTER_LABELS: Array<{ key: keyof SolicitacaoCompraListFilters; label: string }> = [
-  { key: "filial", label: "Filial" },
-  { key: "numSC", label: "Solicitação" },
-  { key: "produto", label: "Produto" },
-  { key: "solicitante", label: "Solicitante" },
-  { key: "dataInicio", label: "Emissão de" },
-  { key: "dataFim", label: "Emissão até" },
-];
+const headerStatus = (request: PurchaseRequest): SolicitacaoCompraProtheusStatus =>
+  typeof request.status === "string"
+    ? mapProtheusSolicitacaoCompraStatus(request.status)
+    : "aberto";
 
-const toRow = (row: SolicitacaoCompraRow): ReportRow => ({
-  filial: row.filialLabel || row.filial,
-  numeroSc: row.numeroSc,
-  item: row.item,
-  produto: row.produto,
-  descricao: row.descricao,
-  unidade: row.unidade,
-  quantidade: row.quantidade,
-  status: getSolicitacaoCompraStatusLabel(row.status),
-  solicitante: row.solicitante,
-  dataCriacao: row.dataCriacao,
+const toRow = (request: PurchaseRequest, item: PurchaseRequest["itens"][number]): ReportRow => ({
+  filial: formatFilialLabel(request.filial) || request.filial,
+  numeroSc: formatNumeroSc(request.numero),
+  item: item.item,
+  produto: item.produto,
+  descricao: item.descricao,
+  unidade: item.unidade,
+  quantidade: item.quantidade,
+  status: getSolicitacaoCompraStatusLabel(item.status ?? headerStatus(request)),
+  solicitante: request.solicitante,
+  dataCriacao: request.dataCriacao,
+  observacao: item.observacao?.trim() ?? "",
 });
 
-export function buildSolicitacoesExportPayload(
-  rows: SolicitacaoCompraRow[],
-  filters: SolicitacaoCompraListFilters,
-  page: number,
-): ExportPayload {
-  const filtros = FILTER_LABELS.map(({ key, label }) => ({
-    label,
-    valor: String(filters[key] ?? "").trim(),
-  })).filter((filtro) => filtro.valor.length > 0);
+export function buildSolicitacoesExportPayload(request: PurchaseRequest): ExportPayload {
+  const linhas = request.itens.map((item) => toRow(request, item));
+  const numeroSc = formatNumeroSc(request.numero);
 
   return {
     colunas: COLUNAS,
-    linhas: rows.map(toRow),
+    linhas,
     meta: {
       titulo: "Solicitações de Compra",
-      // A listagem é paginada, então o documento diz o que ele realmente contém.
-      subtitulo: `Página ${page} — ${rows.length} ${rows.length === 1 ? "item" : "itens"}`,
-      nomeArquivo: "solicitacoes-compra",
-      filtros,
+      subtitulo: `SC ${numeroSc} — ${linhas.length} ${linhas.length === 1 ? "item" : "itens"}`,
+      nomeArquivo: `solicitacao-compra-${numeroSc}`,
     },
   };
 }

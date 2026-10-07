@@ -94,6 +94,7 @@ describe("mapFormToIncluiSCPayload rateioCC", () => {
     );
 
     expect(payload.itens[0]).toEqual({
+      item: "0001",
       codigoProduto: "12312123",
       quantidade: 5,
       centroCusto: "99999997",
@@ -146,6 +147,7 @@ describe("mapFormToIncluiSCPayload rateioCC", () => {
       acao: "incluir",
       itens: [
         {
+          item: "0001",
           codigoProduto: "12312123",
           quantidade: 10,
           observacao: "Material para manutenção preventiva.",
@@ -157,6 +159,7 @@ describe("mapFormToIncluiSCPayload rateioCC", () => {
           ],
         },
         {
+          item: "0002",
           codigoProduto: "9813000016",
           quantidade: 5,
           centroCusto: "99999997",
@@ -202,5 +205,41 @@ describe("mapFormToIncluiSCPayload rateioCC", () => {
 
     expect(payload.itens[0].placa).toBe("ABC1D23");
     expect(payload.itens[1].placa).toBe("");
+    expect(payload.itens.map((item) => item.item)).toEqual(["0001", "0002"]);
+  });
+
+  it("renumbers inclusion items in the current order", () => {
+    const payload = mapFormToIncluiSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "1",
+        itens: [
+          {
+            produto: "A",
+            produtoDescricao: "A",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 1,
+            observacao: "Obs",
+            dataEntrega: "2026-07-20",
+            item: "0005",
+          },
+          {
+            produto: "B",
+            produtoDescricao: "B",
+            unidade: "UN",
+            centroCusto: "1102",
+            centroCustoDescricao: "OP",
+            quantidade: 1,
+            observacao: "Obs",
+            dataEntrega: "2026-07-21",
+          },
+        ],
+      },
+      "000000",
+    );
+
+    expect(payload.itens.map((item) => item.item)).toEqual(["0001", "0002"]);
   });
 });

@@ -64,6 +64,15 @@ const NotasFiltersPanel: React.FC<NotasFiltersPanelProps> = ({
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="filtro-usuario">Usuário</Label>
+          <Input
+            id="filtro-usuario"
+            value={filters.usuario}
+            onChange={(e) => update({ usuario: e.target.value })}
+            placeholder="Usuário da emissão"
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="filtro-data-inicio">Data inicial</Label>
           <BrDateInput
             id="filtro-data-inicio"

@@ -3,6 +3,7 @@ import {
   formatNotaParteLines,
   formatNotaPrintCurrency,
   formatNotaPrintDate,
+  getNotaPrintDadosBancarios,
   getNotaPrintFormaPagamento,
   getNotaPrintItemCentroCusto,
   getNotaPrintItemDescription,
@@ -80,6 +81,7 @@ export const buildNotaPrintHtml = (
   const tomadorLines = formatNotaParteLines(getNotaTomadorParte(nota));
   const total = getNotaPrintTotal(nota);
   const numeroDoc = getNotaPrintNumeroDoc(nota);
+  const dadosBancarios = getNotaPrintDadosBancarios(nota);
   const isDebito = nota.tipo === "debito";
   const logoUrl = options.logoUrl?.trim() ?? "";
 
@@ -353,6 +355,9 @@ export const buildNotaPrintHtml = (
         <div>
           <div class="footer-label">Forma de Pagamento</div>
           <div class="footer-value">${escapeHtml(getNotaPrintFormaPagamento(nota))}</div>
+          ${dadosBancarios
+            .map((line) => `<div class="footer-value">${escapeHtml(line)}</div>`)
+            .join("")}
         </div>
         <div>
           <div class="footer-label">Responsável Pela Emissão</div>

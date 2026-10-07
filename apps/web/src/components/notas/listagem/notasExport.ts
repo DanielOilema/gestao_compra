@@ -30,6 +30,7 @@ const buildFiltroSummary = (filters: NotasListFilters) =>
   [
     { label: "Tipo", valor: filters.tipo === "all" ? "" : (TIPO_LABELS[filters.tipo] ?? "") },
     { label: "Cliente/Fornecedor", valor: filters.cliFor },
+    { label: "Usuário", valor: filters.usuario },
     { label: "Pesquisa", valor: filters.pesquisa },
     { label: "Emissão de", valor: filters.dataInicio },
     { label: "Emissão até", valor: filters.dataFim },

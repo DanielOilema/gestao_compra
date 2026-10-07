@@ -189,6 +189,20 @@ export const getNotaPrintResponsavel = (nota: DebitCreditNote): string => {
 export const getNotaPrintFormaPagamento = (nota: DebitCreditNote): string =>
   nota.formaPagamento ? getFormaPagamentoLabel(nota.formaPagamento) : "-";
 
+/** Banco, agência e conta da nota de débito, apenas quando preenchidos. */
+export const getNotaPrintDadosBancarios = (nota: DebitCreditNote): string[] => {
+  if (nota.tipo !== "debito") return [];
+
+  const lines: string[] = [];
+  const banco = nota.banco?.trim();
+  const agencia = nota.agencia?.trim();
+  const conta = nota.conta?.trim();
+  if (banco) lines.push(`Banco: ${banco}`);
+  if (agencia) lines.push(`Agência: ${agencia}`);
+  if (conta) lines.push(`Conta: ${conta}`);
+  return lines;
+};
+
 export const getNotaPrintTotal = (nota: DebitCreditNote): number => {
   if (nota.itens.length > 0) {
     return nota.itens.reduce((sum, item) => sum + (Number(item.valor) || 0), 0);

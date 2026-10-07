@@ -6,6 +6,7 @@ import {
   type PurchaseRequest,
 } from "@gestao-compra/shared";
 import { mapPurchaseRequestToInclusaoDraft } from "@/components/solicitacoes/inclusao/copySolicitacaoCompra";
+import { buildSolicitacoesExportPayload } from "@/components/solicitacoes/listagem/solicitacaoCompraExport";
 import SolicitacaoCompraDetailContent from "@/components/solicitacoes/listagem/SolicitacaoCompraDetailContent";
 
 const navigate = vi.fn();
@@ -146,6 +147,7 @@ describe("mapPurchaseRequestToInclusaoDraft", () => {
           observacao: "Urgente",
           placa: "",
           dataEntrega: "2026-08-10",
+          item: "0001",
         },
       ],
     });
@@ -226,5 +228,53 @@ describe("SolicitacaoCompraDetailContent copy action", () => {
     expect(navigate).toHaveBeenCalledWith("/solicitacoes-compra/nova", {
       state: { alterFrom: request },
     });
+  });
+
+  it("shows Exportar beside Alterar", () => {
+    render(
+      React.createElement(SolicitacaoCompraDetailContent, {
+        request: baseRequest(),
+        onBack: () => undefined,
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: "Exportar" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Alterar" })).toBeEnabled();
+  });
+});
+
+describe("buildSolicitacoesExportPayload", () => {
+  it("keeps the listing columns and adds the item observation", () => {
+    const payload = buildSolicitacoesExportPayload(baseRequest());
+
+    expect(payload.colunas.map((coluna) => coluna.label)).toEqual([
+      "Filial",
+      "Solicitação",
+      "Item",
+      "Produto",
+      "Descrição",
+      "UM",
+      "Quantidade",
+      "Status",
+      "Solicitante",
+      "Data",
+      "Observação",
+    ]);
+    expect(payload.linhas).toEqual([
+      {
+        filial: "0101 - OILEMA COMÉRCIO BA",
+        numeroSc: "000123",
+        item: "0001",
+        produto: "8001000013",
+        descricao: "BIG BAG",
+        unidade: "UN",
+        quantidade: 10,
+        status: "Aberto",
+        solicitante: "Daniel Silveira",
+        dataCriacao: "2026-08-01",
+        observacao: "Urgente",
+      },
+    ]);
+    expect(payload.meta.nomeArquivo).toBe("solicitacao-compra-000123");
   });
 });

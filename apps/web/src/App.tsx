@@ -17,6 +17,11 @@ const SolicitacoesCompraLayout = lazy(() => import("@/pages/solicitacoes-compra/
 const NovaSolicitacaoPage = lazy(() => import("@/pages/solicitacoes-compra/NovaSolicitacaoPage"));
 const AlterarSolicitacaoPage = lazy(() => import("@/pages/solicitacoes-compra/AlterarSolicitacaoPage"));
 const MinhasSolicitacoesPage = lazy(() => import("@/pages/solicitacoes-compra/MinhasSolicitacoesPage"));
+const AcompanhamentoSolicitacoesPage = lazy(() =>
+  import("@/pages/solicitacoes-compra/AcompanhamentoSolicitacoesPage").then((module) => ({
+    default: module.AcompanhamentoSolicitacoesRoute,
+  })),
+);
 const NotasLayout = lazy(() => import("@/pages/notas/NotasLayout"));
 const NovaNotaPage = lazy(() => import("@/pages/notas/NovaNotaPage"));
 const RelatoriosLayout = lazy(() => import("@/pages/relatorios/RelatoriosLayout"));
@@ -74,6 +79,19 @@ const App = () => (
                       <Route path="alterar" element={<AlterarSolicitacaoPage />} />
                       <Route path="minhas" element={<MinhasSolicitacoesPage />} />
                     </Route>
+
+                    <Route
+                      path="/acompanhamento-solicitacoes"
+                      element={
+                        <PermissionRoute permission="acompanhamento-solicitacoes">
+                          <AcompanhamentoSolicitacoesPage />
+                        </PermissionRoute>
+                      }
+                    />
+                    <Route
+                      path="/solicitacoes-compra/acompanhamento"
+                      element={<Navigate to="/acompanhamento-solicitacoes" replace />}
+                    />
 
                     <Route
                       path="/notas-debito-credito"

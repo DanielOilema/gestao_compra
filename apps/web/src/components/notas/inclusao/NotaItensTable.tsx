@@ -18,7 +18,7 @@ import {
   DialogTitle,
   useIsMobile,
 } from "@gestao-compra/ui";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import ProdutoCombobox from "@/components/solicitacoes/inclusao/ProdutoCombobox";
 import NotaCentroCustoCombobox from "./NotaCentroCustoCombobox";
 import NotaItemMobileCard from "./NotaItemMobileCard";
@@ -45,19 +45,34 @@ const formatCurrency = (value: number) =>
 const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }) => {
   const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<NotaItemDraft>(emptyItem());
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const ccRequired = tipo === "debito";
   const obsRequired = tipo === "debito";
+  const isEditing = Boolean(editingId);
 
   const openDialog = () => {
+    setEditingId(null);
     setDraft(emptyItem());
     setErrors({});
     setDialogOpen(true);
   };
 
-  const addItem = () => {
+  const openEdit = (item: NotaItemDraft) => {
+    setEditingId(item.id);
+    setDraft({ ...item });
+    setErrors({});
+    setDialogOpen(true);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) setEditingId(null);
+  };
+
+  const saveItem = () => {
     const nextErrors: Record<string, string> = {};
     if (!draft.produto) nextErrors.produto = "Produto obrigatório";
     if (!draft.valor || draft.valor <= 0) nextErrors.valor = "Valor deve ser maior que zero";
@@ -70,7 +85,12 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    onChange([...items, draft]);
+    if (editingId) {
+      onChange(items.map((item) => (item.id === editingId ? draft : item)));
+    } else {
+      onChange([...items, draft]);
+    }
+    setEditingId(null);
     setDialogOpen(false);
   };
 
@@ -101,7 +121,12 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
       ) : isMobile ? (
         <div className="space-y-2">
           {items.map((item) => (
-            <NotaItemMobileCard key={item.id} item={item} onRemove={removeItem} />
+            <NotaItemMobileCard
+              key={item.id}
+              item={item}
+              onEdit={openEdit}
+              onRemove={removeItem}
+            />
           ))}
         </div>
       ) : (
@@ -113,7 +138,7 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
                 <TableHead>Descrição</TableHead>
                 <TableHead>C.Custo</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="w-[60px]" />
+                <TableHead className="w-24 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -132,16 +157,27 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
                       : "-"}
                   </TableCell>
                   <TableCell className="text-right">{formatCurrency(item.valor)}</TableCell>
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeItem(item.id)}
-                      aria-label="Remover item"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEdit(item)}
+                        aria-label="Editar item"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(item.id)}
+                        aria-label="Remover item"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -150,10 +186,10 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Adicionar item</DialogTitle>
+            <DialogTitle>{isEditing ? "Editar item" : "Adicionar item"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <ProdutoCombobox
@@ -232,12 +268,12 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
               type="button"
               variant="outline"
               className="w-full sm:w-auto"
-              onClick={() => setDialogOpen(false)}
+              onClick={() => handleDialogOpenChange(false)}
             >
               Cancelar
             </Button>
-            <Button type="button" className="w-full sm:w-auto" onClick={addItem}>
-              Adicionar
+            <Button type="button" className="w-full sm:w-auto" onClick={saveItem}>
+              {isEditing ? "Salvar" : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>

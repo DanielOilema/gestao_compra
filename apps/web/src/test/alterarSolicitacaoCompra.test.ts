@@ -13,9 +13,11 @@ import {
   isSolicitanteDaSolicitacao,
   mapFormToAlteraSCPayload,
   mapFormToIncluiSCPayload,
+  flattenPurchaseRequests,
   mapProtheusListaSolicitacoesResponse,
   mapProtheusTipoCompra,
   mapPurchaseRequestToSolicitacaoDraft,
+  listItensExcluidos,
   type PurchaseRequest,
 } from "@gestao-compra/shared";
 
@@ -314,6 +316,165 @@ describe("mapFormToAlteraSCPayload", () => {
     });
     expect(payload.itens[0]).not.toHaveProperty("centroCusto");
   });
+
+  it("keeps loaded item numbers and continues after removed items", () => {
+    const payload = mapFormToIncluiSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "1",
+        itens: [
+          {
+            produto: "8001000013",
+            produtoDescricao: "BIG BAG",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 10,
+            observacao: "Urgente",
+            dataEntrega: "2026-08-10",
+            item: "0001",
+          },
+          {
+            produto: "8001000014",
+            produtoDescricao: "NOVO",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 1,
+            observacao: "Novo item",
+            dataEntrega: "2026-08-11",
+          },
+        ],
+      },
+      "Daniel Silveira",
+      { acao: "alterar", numeroSC: "000123", numeroItemReservado: 3 },
+    );
+
+    expect(payload.itens.map((item) => item.item)).toEqual(["0001", "0004"]);
+  });
+
+  it("sends removed original items in excluir after itens", () => {
+    const payload = mapFormToIncluiSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "1",
+        itens: [
+          {
+            produto: "333333",
+            produtoDescricao: "MANTIDO",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 1,
+            observacao: "Permanece",
+            dataEntrega: "2026-08-10",
+            item: "0003",
+          },
+        ],
+      },
+      "Daniel Silveira",
+      {
+        acao: "alterar",
+        numeroSC: "000123",
+        numeroItemReservado: 3,
+        excluir: [
+          { item: "0001", produto: "11111" },
+          { item: "0002", produto: "222222" },
+        ],
+      },
+    );
+
+    expect(Object.keys(payload)).toEqual([
+      "filial",
+      "solicitante",
+      "tipoCompra",
+      "acao",
+      "numeroSC",
+      "itens",
+      "excluir",
+    ]);
+    expect(payload.excluir).toEqual([
+      { item: 1, produto: "11111" },
+      { item: 2, produto: "222222" },
+    ]);
+    expect(payload.itens.map((item) => item.item)).toEqual(["0003"]);
+  });
+
+  it("builds excluir for numeric item 9 removed from the original solicitation", () => {
+    const mapped = mapProtheusListaSolicitacoesResponse({
+      SOLICITACOES: [
+        {
+          filial: "0101",
+          numero: "010148",
+          item: 1,
+          produto: "11111",
+          descricao: "A",
+          quant: 1,
+          solicitante: "Administrador",
+          emissao: "2026/10/06",
+          status: "Bloqueada",
+        },
+        {
+          filial: "0101",
+          numero: "010148",
+          item: 9,
+          produto: "99999",
+          descricao: "I",
+          quant: 1,
+          solicitante: "Administrador",
+          emissao: "2026/10/06",
+          status: "Bloqueada",
+        },
+      ],
+    });
+
+    const draft = mapPurchaseRequestToSolicitacaoDraft(mapped.requests[0]);
+    const restantes = draft.itens.filter((item) => item.item !== "0009");
+    const payload = mapFormToIncluiSCPayload(
+      {
+        filial: draft.filial,
+        tipoCompra: "1",
+        itens: restantes.map(({ id: _id, ...item }) => item),
+      },
+      "Administrador",
+      {
+        acao: "alterar",
+        numeroSC: "010148",
+        numeroItemReservado: 9,
+        excluir: listItensExcluidos(draft.itens, restantes),
+      },
+    );
+
+    expect(draft.itens.map((item) => item.item)).toEqual(["0001", "0009"]);
+    expect(payload.excluir).toEqual([{ item: 9, produto: "99999" }]);
+    expect(payload.itens.map((item) => item.item)).toEqual(["0001"]);
+  });
+
+  it("omits excluir when no original item was removed", () => {
+    const payload = mapFormToAlteraSCPayload(
+      {
+        filial: "0101",
+        tipoCompra: "1",
+        itens: [
+          {
+            produto: "8001000013",
+            produtoDescricao: "BIG BAG",
+            unidade: "UN",
+            centroCusto: "1101",
+            centroCustoDescricao: "ADMIN",
+            quantidade: 10,
+            observacao: "Urgente",
+            dataEntrega: "2026-08-10",
+            item: "0001",
+          },
+        ],
+      },
+      "Daniel Silveira",
+      "000123",
+    );
+
+    expect(payload).not.toHaveProperty("excluir");
+  });
 });
 
 describe("mapProtheusTipoCompra", () => {
@@ -345,6 +506,27 @@ describe("mapProtheusListaSolicitacoesResponse", () => {
 
     expect(mapped.requests[0].tipoCompra).toBe("2");
     expect(mapped.requests[0].itens[0].dataEntrega).toBe("2026-08-20");
+  });
+
+  it("maps unidadeMedida into the listing unit", () => {
+    const mapped = mapProtheusListaSolicitacoesResponse({
+      SOLICITACOES: [
+        {
+          filial: "0101",
+          numero: "010148",
+          item: "0010",
+          produto: "9802000189",
+          descricao: "ARROZ 5 KG",
+          quant: 3,
+          solicitante: "Administrador",
+          status: "Aberto",
+          unidadeMedida: "KG",
+        },
+      ],
+    });
+
+    expect(mapped.requests[0].itens[0].unidade).toBe("KG");
+    expect(flattenPurchaseRequests(mapped.requests)[0].unidade).toBe("KG");
   });
 
   it("maps rateio from list lines and trims padded cost centers", () => {

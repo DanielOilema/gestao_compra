@@ -10,7 +10,7 @@ export const permissionModuleGroups: PermissionModuleGroup[] = [
   {
     id: "compras",
     title: "Compras",
-    permissions: ["aprovacoes", "solicitacoes-compra", "notas-debito-credito"],
+    permissions: ["aprovacoes", "solicitacoes-compra", "acompanhamento-solicitacoes", "notas-debito-credito"],
   },
   {
     id: "logistica",

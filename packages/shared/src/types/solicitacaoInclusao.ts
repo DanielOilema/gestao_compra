@@ -36,7 +36,7 @@ export interface SolicitacaoFormPayload {
 }
 
 export interface IncluiSCItemPayload {
-  item?: string;
+  item: string;
   codigoProduto: string;
   quantidade: number;
   centroCusto?: string;
@@ -53,6 +53,12 @@ export interface IncluiSCPayload {
   acao: AcaoSolicitacaoCompra;
   numeroSC?: string;
   itens: IncluiSCItemPayload[];
+  excluir?: ExcluirSCItemPayload[];
+}
+
+export interface ExcluirSCItemPayload {
+  item: number;
+  produto: string;
 }
 
 export interface IncluiSCResult {
@@ -61,12 +67,13 @@ export interface IncluiSCResult {
 }
 
 export interface AlteraSCItemPayload extends IncluiSCItemPayload {
-  item?: string;
+  item: string;
 }
 
 export interface AlteraSCPayload extends IncluiSCPayload {
   acao: typeof ACAO_ALTERA_SC;
   numeroSC: string;
+  excluir?: ExcluirSCItemPayload[];
 }
 
 export interface AlteraSCResult {

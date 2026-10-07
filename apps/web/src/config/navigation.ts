@@ -1,5 +1,6 @@
 import {
   CheckSquare,
+  Columns3,
   FileText,
   Landmark,
   Receipt,
@@ -51,11 +52,20 @@ export const appModuleGroups: AppModuleGroup[] = [
       {
         id: "solicitacoes-compra",
         title: "Solicitações de Compra",
-        description: "Criar e acompanhar solicitações de compra",
+        description: "Criar e consultar solicitações de compra",
         path: "/solicitacoes-compra",
         icon: FileText,
         enabled: true,
         permissionKey: "solicitacoes-compra",
+      },
+      {
+        id: "acompanhamento-solicitacoes",
+        title: "Acompanhamento de Solicitações",
+        description: "Acompanhar o andamento das solicitações de compra",
+        path: "/acompanhamento-solicitacoes",
+        icon: Columns3,
+        enabled: true,
+        permissionKey: "acompanhamento-solicitacoes",
       },
       {
         id: "notas-debito-credito",

@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.protheus-lista-solicitacoes]
 verify_jwt = false
 
+[functions.protheus-acompanhamento-solicitacoes]
+verify_jwt = false
+
 [functions.protheus-filiais]
 verify_jwt = false
 
@@ -82,6 +85,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.protheus-log-aprovacao]
+verify_jwt = false
+
+[functions.protheus-rastro-solicitacao]
 verify_jwt = false
 
 [functions.permissoes-por-usuario]

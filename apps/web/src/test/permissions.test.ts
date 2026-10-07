@@ -20,6 +20,12 @@ describe("buildUserMenu", () => {
     expect(paths).toEqual(["/solicitacoes-compra"]);
   });
 
+  it("shows the kanban when the acompanhamento permission is granted", () => {
+    const menu = buildUserMenu(appModuleGroups, ["acompanhamento-solicitacoes"], false);
+    const paths = menu.flatMap((group) => group.routines.map((routine) => routine.path));
+    expect(paths).toEqual(["/acompanhamento-solicitacoes"]);
+  });
+
   it("hides disabled routines even for admin", () => {
     const menu = buildUserMenu(appModuleGroups, [], true);
     const ids = menu.flatMap((group) => group.routines.map((routine) => routine.id));

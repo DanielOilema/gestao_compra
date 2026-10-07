@@ -1,6 +1,4 @@
-import React, { useCallback } from "react";
-import ExportMenu from "@/components/relatorios/ExportMenu";
-import { buildSolicitacoesExportPayload } from "@/components/solicitacoes/listagem/solicitacaoCompraExport";
+import React from "react";
 import { useSolicitacaoCompraList } from "@/components/solicitacoes/listagem/useSolicitacaoCompraList";
 import SolicitacaoCompraToolbar from "@/components/solicitacoes/listagem/SolicitacaoCompraToolbar";
 import SolicitacaoCompraFiltersSection from "@/components/solicitacoes/listagem/SolicitacaoCompraFiltersSection";
@@ -14,41 +12,30 @@ const ListagemSolicitacoesPage: React.FC = () => {
     setFiltersOpen,
     draftFilters,
     setDraftFilters,
-    appliedFilters,
     isLoading,
     page,
     hasNextPage,
     hasPreviousPage,
     selectedRowId,
-    selectedRequest,
     filteredRows,
     detailOpen,
+    detailRequest,
+    detailLoading,
+    detailError,
     toggleFilters,
     handleBuscar,
     handleNextPage,
     handlePreviousPage,
     handleSelectRow,
-    handleVisualizar,
-    handleAlterar,
     handleCloseDetail,
+    handleRetryDetail,
   } = useSolicitacaoCompraList();
-
-  const getExportPayload = useCallback(
-    () => buildSolicitacoesExportPayload(filteredRows, appliedFilters, page),
-    [filteredRows, appliedFilters, page],
-  );
 
   return (
     <div className="animate-fade-in space-y-4">
       <SolicitacaoCompraToolbar
-        onVisualizar={handleVisualizar}
-        onAlterar={handleAlterar}
-        hasSelection={selectedRequest !== null}
         filtersOpen={filtersOpen}
         onToggleFilters={toggleFilters}
-        exportSlot={
-          <ExportMenu getPayload={getExportPayload} disabled={isLoading || filteredRows.length === 0} />
-        }
       />
       <SolicitacaoCompraFiltersSection
         open={filtersOpen}
@@ -72,8 +59,11 @@ const ListagemSolicitacoesPage: React.FC = () => {
         isLoading={isLoading}
       />
       <SolicitacaoCompraDetailDialog
-        request={selectedRequest}
+        request={detailRequest}
         open={detailOpen}
+        isLoading={detailLoading}
+        error={detailError}
+        onRetry={handleRetryDetail}
         onOpenChange={(open) => {
           if (!open) handleCloseDetail();
         }}

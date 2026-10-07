@@ -18,6 +18,8 @@ Deno.serve(async (req) => {
       solicitante,
       dtInicial,
       dtFinal,
+      codUser,
+      nomeUser,
       basicAuth,
       ambiente,
     } = await req.json();
@@ -41,6 +43,8 @@ Deno.serve(async (req) => {
     if (solicitante?.trim()) params.set('solicitante', solicitante.trim());
     if (dtInicial?.trim()) params.set('dtInicial', dtInicial.trim());
     if (dtFinal?.trim()) params.set('dtFinal', dtFinal.trim());
+    if (codUser?.trim()) params.set('codUser', codUser.trim());
+    if (nomeUser?.trim()) params.set('nomeUser', nomeUser.trim());
 
     const baseUrl = protheusUrl('/rest/busca_solicitacoes_compra', ambiente);
     const url = `${baseUrl}?${params.toString()}`;

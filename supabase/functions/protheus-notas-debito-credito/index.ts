@@ -14,6 +14,7 @@ Deno.serve(async (req) => {
       pageSize,
       tipo,
       cliFor,
+      usuario,
       filtro,
       dtInicial,
       dtFinal,
@@ -35,6 +36,7 @@ Deno.serve(async (req) => {
 
     if (tipo?.trim()) params.set('tipo', tipo.trim());
     if (cliFor?.trim()) params.set('cliFor', cliFor.trim());
+    if (usuario?.trim()) params.set('usuario', usuario.trim());
     if (filtro?.trim()) params.set('filtro', filtro.trim());
     if (dtInicial?.trim()) params.set('dtInicial', dtInicial.trim());
     if (dtFinal?.trim()) params.set('dtFinal', dtFinal.trim());

@@ -18,6 +18,9 @@ import {
   isSolicitacaoCompraAlteravelPorStatus,
   mapFormToIncluiSCPayload,
   mapPurchaseRequestToSolicitacaoDraft,
+  listItensExcluidos,
+  maxNumeroItem,
+  nextNumeroItem,
   type PurchaseRequest,
   type RateioCCDraft,
   type SolicitacaoFormPayload,
@@ -118,6 +121,10 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
   const [itens, setItens] = React.useState<SolicitacaoItemDraft[]>(initialDraft?.itens ?? []);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [rateioOpen, setRateioOpen] = React.useState(false);
+  const numeroItemReservado = React.useMemo(
+    () => (isAlter && initialDraft ? maxNumeroItem(initialDraft.itens) : 0),
+    [isAlter, initialDraft],
+  );
 
   const filialSelected = Boolean(filial);
   const isSubmitting = incluiMutation.isPending;
@@ -224,7 +231,9 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
     const parsedItem = parsed.data;
     const item: SolicitacaoItemDraft = {
       id: editingId ?? createItemId(),
-      item: current?.item,
+      item:
+        current?.item?.trim() ||
+        nextNumeroItem(itens, isAlter ? numeroItemReservado : 0),
       produto: parsedItem.produto ?? "",
       produtoDescricao: parsedItem.produtoDescricao ?? "",
       unidade: parsedItem.unidade ?? "UN",
@@ -331,6 +340,11 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
         const apiPayload = mapFormToIncluiSCPayload(formPayload, solicitante, {
           acao: ACAO_ALTERA_SC,
           numeroSC: alterRequest.numero,
+          numeroItemReservado,
+          excluir:
+            initialDraft != null
+              ? listItensExcluidos(initialDraft.itens, itens)
+              : [],
         });
         await incluiMutation.mutateAsync(apiPayload);
       } else {

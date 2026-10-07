@@ -51,9 +51,35 @@ Deno.serve(async (req) => {
       );
     }
 
+    const excluir = Array.isArray(body.excluir)
+      ? body.excluir.flatMap((row: unknown) => {
+          if (!row || typeof row !== 'object') return [];
+          const record = row as Record<string, unknown>;
+          const itemRaw = record.item;
+          const item =
+            typeof itemRaw === 'number'
+              ? itemRaw
+              : Number(String(itemRaw ?? '').trim());
+          const produto =
+            typeof record.produto === 'string'
+              ? record.produto.trim()
+              : String(record.produto ?? '').trim();
+          if (!Number.isFinite(item) || item <= 0 || !produto) return [];
+          return [{ item, produto }];
+        })
+      : [];
+
     const payload =
       isAlter
-        ? { filial, solicitante, tipoCompra, itens, acao, numeroSC }
+        ? {
+            filial,
+            solicitante,
+            tipoCompra,
+            itens,
+            ...(excluir.length > 0 ? { excluir } : {}),
+            acao,
+            numeroSC,
+          }
         : { filial, solicitante, tipoCompra, itens, acao };
 
     const response = await fetch(protheusUrl('/rest/incluiSC', ambiente), {

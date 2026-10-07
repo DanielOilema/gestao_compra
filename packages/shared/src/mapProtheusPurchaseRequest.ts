@@ -1,6 +1,7 @@
 import type { PurchaseRequest, PurchaseRequestItem } from './types/purchaseRequest';
 import type { RateioCCDraft } from './types/solicitacaoInclusao';
 import { mapProtheusSolicitacaoCompraStatus } from './solicitacaoCompraStatus';
+import { formatNumeroItem, parseNumeroItem } from './numeroItemSolicitacao';
 import { mapProtheusTipoCompra, type TipoCompra } from './tipoCompra';
 
 export interface ProtheusListaSCRateioLine {
@@ -25,6 +26,7 @@ export interface ProtheusListaSCLine {
   emissao?: string;
   unidade?: string;
   unid?: string;
+  unidadeMedida?: string;
   status?: string;
   situacao?: string;
   tipoCompra?: string;
@@ -38,6 +40,33 @@ export interface ProtheusListaSCLine {
 }
 
 const t = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+
+const asText = (value: unknown): string => {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(Math.trunc(value));
+  return t(value);
+};
+
+const readNamed = (line: ProtheusListaSCLine, names: string[]): string => {
+  const record = line as Record<string, unknown>;
+  for (const name of names) {
+    const direct = asText(record[name]);
+    if (direct) return direct;
+  }
+  for (const [key, value] of Object.entries(record)) {
+    if (!names.includes(key.toLowerCase())) continue;
+    const text = asText(value);
+    if (text) return text;
+  }
+  return '';
+};
+
+const readUnidade = (line: ProtheusListaSCLine): string =>
+  readNamed(line, ['unidadeMedida', 'unidademedida', 'unidade', 'unid']) || 'UN';
+
+const readItemNumero = (line: ProtheusListaSCLine): string => {
+  const numero = parseNumeroItem(readNamed(line, ['item']));
+  return numero != null ? formatNumeroItem(numero) : '0001';
+};
 
 const parseDate = (raw?: string): string => {
   const s = t(raw);
@@ -191,15 +220,16 @@ export const readRateio = (line: ProtheusListaSCLine): RateioCCDraft[] | undefin
 };
 
 const mapLineToItem = (line: ProtheusListaSCLine, filial: string, numero: string): PurchaseRequestItem => {
-  const item = t(line.item) || '0001';
+  const item = readItemNumero(line);
+  const produto = t(line.produto) || readNamed(line, ['produto']);
   const rateioCC = readRateio(line);
 
   if (rateioCC) {
     return {
       id: `${filial}-${numero}-${item}`,
       item,
-      produto: t(line.produto),
-      unidade: t(line.unidade) || t(line.unid) || 'UN',
+      produto,
+      unidade: readUnidade(line),
       descricao: t(line.descricao),
       quantidade: Number(line.quant ?? line.quantidade) || 0,
       valorEstimado: 0,
@@ -214,8 +244,8 @@ const mapLineToItem = (line: ProtheusListaSCLine, filial: string, numero: string
   return {
     id: `${filial}-${numero}-${item}`,
     item,
-    produto: t(line.produto),
-    unidade: t(line.unidade) || t(line.unid) || 'UN',
+    produto,
+    unidade: readUnidade(line),
     descricao: t(line.descricao),
     quantidade: Number(line.quant ?? line.quantidade) || 0,
     valorEstimado: 0,

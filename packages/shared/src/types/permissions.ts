@@ -1,6 +1,7 @@
 export const ROUTINE_PERMISSION_IDS = [
   'aprovacoes',
   'solicitacoes-compra',
+  'acompanhamento-solicitacoes',
   'notas-debito-credito',
   'transportadoras',
   'relatorios-financeiro',
@@ -43,6 +44,7 @@ export interface ImportUsersResult {
 export const ROUTINE_LABELS: Record<RoutinePermissionId, string> = {
   aprovacoes: 'Aprovação de Compra',
   'solicitacoes-compra': 'Solicitação de Compra',
+  'acompanhamento-solicitacoes': 'Acompanhamento de Solicitações',
   'notas-debito-credito': 'Nota de Débito/Crédito',
   transportadoras: 'Transportadoras',
   'relatorios-financeiro': 'Relatórios do Financeiro',
@@ -56,6 +58,7 @@ export const ROUTINE_LABELS: Record<RoutinePermissionId, string> = {
 export const ASSIGNABLE_PERMISSION_IDS: RoutinePermissionId[] = [
   'aprovacoes',
   'solicitacoes-compra',
+  'acompanhamento-solicitacoes',
   'notas-debito-credito',
   'transportadoras',
   'relatorios-financeiro',

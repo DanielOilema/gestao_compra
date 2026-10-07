@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { PurchaseRequest, PurchaseRequestItem } from "@gestao-compra/shared";
 import {
@@ -21,14 +21,18 @@ import {
   TableHeader,
   TableRow,
 } from "@gestao-compra/ui";
-import { ArrowLeft, FileText, Calendar, Package, User, Pencil, Copy } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, Package, User, Pencil, Copy, Route } from "lucide-react";
+import ExportMenu from "@/components/relatorios/ExportMenu";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { buildSolicitacoesExportPayload } from "./solicitacaoCompraExport";
 import type { NovaSolicitacaoLocationState } from "@/components/solicitacoes/inclusao/copySolicitacaoCompra";
 import SolicitacaoCompraLogAprovacao from "./SolicitacaoCompraLogAprovacao";
 
 interface SolicitacaoCompraDetailContentProps {
   request: PurchaseRequest;
   onBack: () => void;
+  showActions?: boolean;
+  onRastrear?: () => void;
 }
 
 const formatDate = (date: string) =>
@@ -66,6 +70,8 @@ const formatCentroCusto = (item: PurchaseRequestItem) => {
 const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentProps> = ({
   request,
   onBack,
+  showActions = true,
+  onRastrear,
 }) => {
   const navigate = useNavigate();
   const title = `${formatNumeroSc(request.numero)} (${getFilialState(request.filial)})`;
@@ -81,6 +87,11 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
     const state: NovaSolicitacaoLocationState = { alterFrom: request };
     navigate("/solicitacoes-compra/nova", { state });
   };
+
+  const getExportPayload = useCallback(
+    () => buildSolicitacoesExportPayload(request),
+    [request],
+  );
 
   return (
     <div className="animate-fade-in space-y-4 sm:space-y-6">
@@ -215,23 +226,36 @@ const SolicitacaoCompraDetailContent: React.FC<SolicitacaoCompraDetailContentPro
         </CardContent>
       </Card>
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={handleCopy}>
-          <Copy className="mr-2 h-4 w-4" />
-          Copiar
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="w-full sm:w-auto"
-          disabled={!canAlter}
-          title={!canAlter ? ALTERAR_SOLICITACAO_STATUS_MESSAGE : undefined}
-          onClick={handleAlterar}
-        >
-          <Pencil className="mr-2 h-4 w-4" />
-          Alterar
-        </Button>
-      </div>
+      {onRastrear || showActions ? (
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          {onRastrear ? (
+            <Button type="button" size="sm" variant="outline" className="w-full sm:w-auto" onClick={onRastrear}>
+              <Route className="mr-2 h-4 w-4" />
+              Rastrear
+            </Button>
+          ) : null}
+          {showActions ? (
+            <>
+              <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={handleCopy}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full sm:w-auto"
+                disabled={!canAlter}
+                title={!canAlter ? ALTERAR_SOLICITACAO_STATUS_MESSAGE : undefined}
+                onClick={handleAlterar}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Alterar
+              </Button>
+              <ExportMenu getPayload={getExportPayload} className="w-full sm:w-auto" />
+            </>
+          ) : null}
+        </div>
+      ) : null}
 
       <SolicitacaoCompraLogAprovacao
         filial={request.filial}
