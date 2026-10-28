@@ -2,6 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -18,7 +19,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const response = await fetch(protheusUrl('/rest/busca_grupos_solicitacoes', ambiente), {
+    const response = await fetchProtheus(protheusUrl('/rest/busca_grupos_solicitacoes', ambiente), {
       method: 'GET',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -33,9 +34,10 @@ Deno.serve(async (req) => {
       // ignore
     }
 
-    if (response.status === 401 || (data as { code?: number })?.code === 401) {
+    const authError = getProtheusAuthError(response, data);
+    if (authError) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sessão expirada. Faça login novamente.' }),
+        JSON.stringify({ success: false, error: authError }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

@@ -60,19 +60,39 @@ export async function getAcompanhamentoSolicitacoes({
   );
 
   const mapped = mapProtheusAcompanhamentoSolicitacoesResponse(data ?? {});
-  const filtradas = filtrarAcompanhamento(mapped.solicitacoes, filters);
-  const numero = filters.numero.trim().toLowerCase();
-  const filial = filters.filial.trim();
+  const filtrado = filtrarAcompanhamentoSolicitacoes(
+    mapped.solicitacoes,
+    mapped.naoReconhecidas,
+    filters,
+  );
 
   return {
-    solicitacoes: filtradas,
-    naoReconhecidas: mapped.naoReconhecidas.filter((item) => {
-      if (numero && !item.numero.toLowerCase().includes(numero)) return false;
-      if (filial && item.filial !== filial) return false;
-      return true;
-    }),
+    solicitacoes: filtrado.solicitacoes,
+    naoReconhecidas: filtrado.naoReconhecidas,
     // busca_sc_situacao devolve a lista inteira; a paginação fica para um contrato futuro.
     hasNextPage: false,
+  };
+}
+
+export function filtrarAcompanhamentoSolicitacoes(
+  solicitacoes: SolicitacaoAcompanhamento[],
+  naoReconhecidas: SolicitacaoStatusNaoReconhecido[],
+  filters: AcompanhamentoSolicitacaoFilters,
+): { solicitacoes: SolicitacaoAcompanhamento[]; naoReconhecidas: SolicitacaoStatusNaoReconhecido[] } {
+  const numero = filters.numero.trim().toLowerCase();
+  const filial = filters.filial.trim();
+  const restringeCard =
+    Boolean(filters.solicitante.trim() || filters.comprador.trim() || filters.tipoCompra);
+
+  return {
+    solicitacoes: filtrarAcompanhamento(solicitacoes, filters),
+    naoReconhecidas: restringeCard
+      ? []
+      : naoReconhecidas.filter((item) => {
+          if (numero && !item.numero.toLowerCase().includes(numero)) return false;
+          if (filial && item.filial !== filial) return false;
+          return true;
+        }),
   };
 }
 
@@ -83,6 +103,7 @@ function filtrarAcompanhamento(
   const numero = filters.numero.trim().toLowerCase();
   const filial = filters.filial.trim();
   const solicitante = filters.solicitante.trim().toLowerCase();
+  const comprador = filters.comprador.trim().toLowerCase();
   const centroCusto = filters.centroCusto.trim().toLowerCase();
   const fornecedor = filters.fornecedor.trim().toLowerCase();
   const dtInicial = toApiDate(filters.dataInicio);
@@ -92,6 +113,8 @@ function filtrarAcompanhamento(
     if (numero && !item.numero.toLowerCase().includes(numero)) return false;
     if (filial && item.filial !== filial) return false;
     if (solicitante && !(item.solicitante ?? "").toLowerCase().includes(solicitante)) return false;
+    if (comprador && (item.comprador ?? "").trim().toLowerCase() !== comprador) return false;
+    if (filters.tipoCompra && item.tipoCompra !== filters.tipoCompra) return false;
     if (filters.status && item.statusAtual !== filters.status) return false;
     if (centroCusto && !(item.centroCusto ?? "").toLowerCase().includes(centroCusto)) return false;
     if (dtInicial && (item.dataSolicitacao ?? "") < dtInicial) return false;

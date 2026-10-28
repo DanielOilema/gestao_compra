@@ -2,6 +2,7 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
 import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 
 const readErrorMessage = (data: unknown): string | undefined => {
   if (!data || typeof data !== 'object') return undefined;
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     const url = protheusUrl('/rest/busca_filiais', ambiente);
-    const response = await fetch(url, {
+    const response = await fetchProtheus(url, {
       method: 'GET',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -45,9 +46,10 @@ Deno.serve(async (req) => {
       parseError = err instanceof Error ? err.message : 'Resposta inválida do Protheus';
     }
 
-    if (response.status === 401 || (data as { code?: number })?.code === 401) {
+    const authError = getProtheusAuthError(response, data);
+    if (authError) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sessão expirada. Faça login novamente.' }),
+        JSON.stringify({ success: false, error: authError }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

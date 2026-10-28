@@ -1,13 +1,14 @@
-import type {
-  CliForOption,
-  DebitCreditNote,
-  IncluiNotaDCPayload,
-  NotaFormPayload,
-  NotaItem,
-  NotaListRow,
-  NotaParte,
-  NotaStatus,
-  NotaTipo,
+import {
+  padNumSC,
+  type CliForOption,
+  type DebitCreditNote,
+  type IncluiNotaDCPayload,
+  type NotaFormPayload,
+  type NotaItem,
+  type NotaListRow,
+  type NotaParte,
+  type NotaStatus,
+  type NotaTipo,
 } from "./types/debitCreditNote";
 import type { FormaPagamentoNotaDC } from "./formaPagamentoNotaDC";
 import { formatFilialLabel } from "./flattenPurchaseRequests";
@@ -447,35 +448,41 @@ const mapNotaTipoToWire = (tipo: NotaTipo): "C" | "D" =>
 export const mapFormToIncluiNotaDCPayload = (
   form: NotaFormPayload,
   usuario: string,
-): IncluiNotaDCPayload => ({
-  detNotaDebCre: {
-    filial: form.filial,
-    tipo: mapNotaTipoToWire(form.tipo),
-    emissao: isoToProtheusBrDate(form.dataEmissao),
-    vencto: isoToProtheusBrDate(form.dataVencimento),
-    clifor: form.codigoCliFor,
-    loja: form.lojaCliFor,
-    condPagto: form.formaPagamento,
-    banco: form.banco?.trim() ?? "",
-    agencia: form.agencia?.trim() ?? "",
-    conta: form.conta?.trim() ?? "",
-    setor: form.setor,
-    usuario,
-    recebedor: form.nomeRecebedor?.trim() ?? "",
-    cgcRecebedor: form.cpfCnpjRecebedor?.trim() ?? "",
-    natureza: form.tipo === "credito" ? form.natureza : undefined,
-    tes: form.tipo === "credito" ? form.tes : undefined,
-    referenteA: form.referenteA,
-    itens: form.itens.map((item) => ({
-      produto: item.produto,
-      valor: item.valor,
-      obs: item.observacao?.trim() ?? "",
-      ccusto:
-        form.tipo === "debito"
-          ? item.centroCusto
-          : item.centroCusto?.trim()
+): IncluiNotaDCPayload => {
+  const vinculaScExistente =
+    form.tipo === "debito" && form.gerarSolicitacao === false && Boolean(form.numSC?.trim());
+
+  return {
+    detNotaDebCre: {
+      filial: form.filial,
+      tipo: mapNotaTipoToWire(form.tipo),
+      emissao: isoToProtheusBrDate(form.dataEmissao),
+      vencto: isoToProtheusBrDate(form.dataVencimento),
+      clifor: form.codigoCliFor,
+      loja: form.lojaCliFor,
+      condPagto: form.formaPagamento,
+      banco: form.banco?.trim() ?? "",
+      agencia: form.agencia?.trim() ?? "",
+      conta: form.conta?.trim() ?? "",
+      setor: form.setor,
+      usuario,
+      recebedor: form.nomeRecebedor?.trim() ?? "",
+      cgcRecebedor: form.cpfCnpjRecebedor?.trim() ?? "",
+      natureza: form.tipo === "credito" ? form.natureza : undefined,
+      tes: form.tipo === "credito" ? form.tes : undefined,
+      referenteA: form.referenteA,
+      ...(vinculaScExistente ? { numSC: padNumSC(form.numSC!) } : {}),
+      itens: form.itens.map((item) => ({
+        produto: item.produto,
+        valor: item.valor,
+        obs: item.observacao?.trim() ?? "",
+        ccusto:
+          form.tipo === "debito"
             ? item.centroCusto
-            : undefined,
-    })),
-  },
-});
+            : item.centroCusto?.trim()
+              ? item.centroCusto
+              : undefined,
+      })),
+    },
+  };
+};

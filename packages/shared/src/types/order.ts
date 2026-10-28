@@ -21,7 +21,12 @@ export interface Order {
   filial: string;
   fornecedor: string;
   cnpj: string;
+  /** Total do pedido (itens + frete). */
   valor: number;
+  /** Soma dos itens, sem frete. */
+  valorItens?: number;
+  /** Frete informado em busca_pc_pendentes. */
+  frete?: number;
   dataEmissao: string;
   dataEntrega: string;
   solicitante: string;

@@ -3,6 +3,7 @@ import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { readProtheusText } from '../_shared/protheusResponse.ts';
 import { requirePermission, PermissionError } from '../_shared/checkPermission.ts';
 import { basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 
 // Extrai o primeiro objeto JSON válido de um texto que pode conter JSON
 // duplicado/concatenado (ex.: `{"success":"true"}{"success":"true"}`).
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
       throw err;
     }
 
-    const response = await fetch(protheusUrl('/rest/AprovaCompra', ambiente), {
+    const response = await fetchProtheus(protheusUrl('/rest/AprovaCompra', ambiente), {
       method: 'POST',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -99,9 +100,10 @@ Deno.serve(async (req) => {
     const data = extractFirstJson(rawText);
     console.log('[protheus-aprova-compra] status:', response.status, 'body:', rawText, 'parsed:', JSON.stringify(data));
 
-    if (response.status === 401 || data?.code === 401) {
+    const authError = getProtheusAuthError(response, data, rawText);
+    if (authError) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sessão expirada. Faça login novamente.' }),
+        JSON.stringify({ success: false, error: authError }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

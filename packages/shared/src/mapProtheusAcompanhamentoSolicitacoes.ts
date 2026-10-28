@@ -287,6 +287,7 @@ const parseLine = (value: unknown): ParsedLine | undefined => {
         numero,
         filial,
         solicitante: readField(value, ["solicitante"]) || undefined,
+        comprador: readField(value, ["comprador", "nomeComprador"]) || undefined,
         dataSolicitacao:
           parseDate(
             readField(value, [
@@ -335,6 +336,7 @@ const mergeSolicitacao = (
 ): SolicitacaoAcompanhamento => ({
   ...current,
   solicitante: preferText(current.solicitante, next.solicitante),
+  comprador: preferText(current.comprador, next.comprador),
   dataSolicitacao: preferText(current.dataSolicitacao, next.dataSolicitacao),
   tipoCompra: current.tipoCompra ?? next.tipoCompra,
   observacoes: preferText(current.observacoes, next.observacoes),

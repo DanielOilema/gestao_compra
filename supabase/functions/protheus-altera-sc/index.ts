@@ -1,3 +1,4 @@
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
@@ -48,7 +49,7 @@ Deno.serve(async (req) => {
 
     const payload = { filial, numeroSC, solicitante, tipoCompra, itens };
 
-    const response = await fetch(protheusUrl('/rest/alteraSC', ambiente), {
+    const response = await fetchProtheus(protheusUrl('/rest/alteraSC', ambiente), {
       method: 'POST',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -64,9 +65,10 @@ Deno.serve(async (req) => {
       // ignore
     }
 
-    if (response.status === 401 || data?.code === 401) {
+    const authError = getProtheusAuthError(response, data);
+    if (authError) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sessão expirada. Faça login novamente.' }),
+        JSON.stringify({ success: false, error: authError }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

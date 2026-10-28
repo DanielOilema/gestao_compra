@@ -1,15 +1,15 @@
 import React from "react";
-import { RefreshCw, Search } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { KANBAN_SOLICITACAO_COLUMNS } from "@gestao-compra/shared";
 import {
   Alert,
   AlertDescription,
   Button,
   cn,
-  Input,
   Skeleton,
 } from "@gestao-compra/ui";
 import { useAcompanhamentoSolicitacoes } from "@/hooks/useAcompanhamentoSolicitacoes";
+import AcompanhamentoFiltros from "@/components/solicitacoes/acompanhamento/AcompanhamentoFiltros";
 import KanbanSolicitacoes from "@/components/solicitacoes/acompanhamento/KanbanSolicitacoes";
 import SolicitacaoCompraDetailDialog from "@/components/solicitacoes/listagem/SolicitacaoCompraDetailDialog";
 import AppLayout from "@/components/layout/AppLayout";
@@ -38,6 +38,12 @@ const AcompanhamentoSolicitacoesPage: React.FC = () => {
   const {
     numero,
     setNumero,
+    solicitante,
+    setSolicitante,
+    comprador,
+    setComprador,
+    tipoCompra,
+    setTipoCompra,
     solicitacoes,
     naoReconhecidas,
     hasNextPage,
@@ -47,7 +53,6 @@ const AcompanhamentoSolicitacoesPage: React.FC = () => {
     detailRequest,
     detailLoading,
     detailError,
-    buscar,
     retry,
     selectSolicitacao,
     retryDetail,
@@ -56,38 +61,24 @@ const AcompanhamentoSolicitacoesPage: React.FC = () => {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 animate-fade-in">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={retry} disabled={isLoading}>
-            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
-            Atualizar
-          </Button>
-        </div>
-        <form
-          className="relative w-full sm:max-w-xs"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!isLoading) buscar();
-          }}
-        >
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-            aria-label="Pesquisar"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-          <Input
-            type="search"
-            value={numero}
-            onChange={(event) => setNumero(event.target.value)}
-            placeholder="Número da solicitação"
-            className="pl-9"
-            disabled={isLoading}
-          />
-        </form>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={retry} disabled={isLoading}>
+          <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+          Atualizar
+        </Button>
       </div>
+
+      <AcompanhamentoFiltros
+        numero={numero}
+        onNumeroChange={setNumero}
+        solicitante={solicitante}
+        comprador={comprador}
+        tipoCompra={tipoCompra}
+        disabled={isLoading}
+        onSolicitanteChange={setSolicitante}
+        onCompradorChange={setComprador}
+        onTipoCompraChange={setTipoCompra}
+      />
 
       {naoReconhecidas.length > 0 && !isLoading && !error ? (
         <Alert>

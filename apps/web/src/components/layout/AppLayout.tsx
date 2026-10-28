@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SidebarInset, SidebarProvider } from "@gestao-compra/ui";
+import { cn, SidebarInset, SidebarProvider } from "@gestao-compra/ui";
 import Header from "@/components/Header";
 import AppSidebar from "@/components/navigation/AppSidebar";
 import SidebarCornerToggle from "@/components/navigation/SidebarCornerToggle";
@@ -7,9 +7,11 @@ import { readSidebarOpen, writeSidebarOpen } from "@/components/navigation/sideb
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  /** Usa a largura do conteúdo, sem o limite centralizado das demais rotinas. */
+  fluid?: boolean;
 }
 
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+const AppLayout: React.FC<AppLayoutProps> = ({ children, fluid = false }) => {
   const [sidebarOpen, setSidebarOpen] = useState(readSidebarOpen);
 
   const handleSidebarOpenChange = (open: boolean) => {
@@ -25,9 +27,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     >
       <AppSidebar />
       <SidebarCornerToggle />
-      <SidebarInset className="md:-ml-px">
-        <Header />
-        <div className="container mx-auto flex-1 px-3 sm:px-4 py-4 sm:py-6">{children}</div>
+      <SidebarInset className={cn("md:-ml-px", fluid && "md:h-svh md:overflow-hidden")}>
+        <div className={fluid ? "shrink-0" : undefined}>
+          <Header />
+        </div>
+        <div
+          className={cn(
+            "mx-auto flex w-full flex-1 flex-col py-4 sm:py-6",
+            fluid ? "min-h-0 max-w-none px-3 sm:px-4" : "container px-3 sm:px-4",
+          )}
+        >
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

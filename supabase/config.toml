@@ -6,6 +6,9 @@ project_id = "pybgbyojihxgfstolvah"
 [functions.protheus-login]
 verify_jwt = false
 
+[functions.protheus-change-password]
+verify_jwt = false
+
 [functions.protheus-sc-pendentes]
 verify_jwt = false
 

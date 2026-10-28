@@ -8,7 +8,9 @@ import {
   Label,
   RadioGroup,
   RadioGroupItem,
+  Switch,
   Textarea,
+  cn,
 } from "@gestao-compra/ui";
 import {
   FORMA_PAGAMENTO_CREDITO,
@@ -82,15 +84,19 @@ const NotaInclusaoForm: React.FC = () => {
   const [naturezaLabel, setNaturezaLabel] = React.useState(initialDraft.naturezaLabel);
   const [tes, setTes] = React.useState(initialDraft.tes);
   const [tesLabel, setTesLabel] = React.useState(initialDraft.tesLabel);
+  const [gerarSolicitacao, setGerarSolicitacao] = React.useState(true);
+  const [numSC, setNumSC] = React.useState("");
   const [itens, setItens] = React.useState<NotaItemDraft[]>(initialDraft.itens);
   const prevTipoRef = React.useRef(tipo);
   const prevFilialRef = React.useRef(filial);
 
   const isCredito = tipo === "credito";
+  const isDebito = tipo === "debito";
   const isDepositoForma = isDeposito(formaPagamento);
   const isSubmitting = incluiMutation.isPending;
   const valorTotal = getNotaDraftItemsTotal(itens);
   const responsavel = user?.nome ?? "";
+  const numSCObrigatorio = isDebito && !gerarSolicitacao;
 
   React.useEffect(() => {
     const dirty =
@@ -108,6 +114,8 @@ const NotaInclusaoForm: React.FC = () => {
       Boolean(setor) ||
       Boolean(natureza) ||
       Boolean(tes) ||
+      Boolean(numSC.trim()) ||
+      !gerarSolicitacao ||
       itens.length > 0 ||
       dataEmissao !== todayBrDate() ||
       tipo !== "debito";
@@ -127,6 +135,8 @@ const NotaInclusaoForm: React.FC = () => {
     setor,
     natureza,
     tes,
+    numSC,
+    gerarSolicitacao,
     itens,
     dataEmissao,
     tipo,
@@ -177,7 +187,15 @@ const NotaInclusaoForm: React.FC = () => {
     setLojaCliFor("");
     setNomeCliFor("");
     setCnpj("");
+    setGerarSolicitacao(true);
+    setNumSC("");
   }, [tipo]);
+
+  React.useEffect(() => {
+    if (gerarSolicitacao) {
+      setNumSC("");
+    }
+  }, [gerarSolicitacao]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,6 +267,10 @@ const NotaInclusaoForm: React.FC = () => {
       toast.error("Observação é obrigatória em todos os itens de débito");
       return;
     }
+    if (numSCObrigatorio && !numSC.trim()) {
+      toast.error("Informe o número da solicitação de compra");
+      return;
+    }
     if (!responsavel) {
       toast.error("Responsável não identificado. Faça login novamente.");
       return;
@@ -278,6 +300,8 @@ const NotaInclusaoForm: React.FC = () => {
         conta: isDepositoForma ? conta : undefined,
         nomeRecebedor: nomeRecebedor.trim() || undefined,
         cpfCnpjRecebedor: cpfCnpjRecebedor.trim() || undefined,
+        gerarSolicitacao: isDebito ? gerarSolicitacao : undefined,
+        numSC: numSCObrigatorio ? numSC.trim() : undefined,
         itens: itens.map(({ id: _id, ...rest }) => rest),
       },
       responsavel,
@@ -485,6 +509,53 @@ const NotaInclusaoForm: React.FC = () => {
               setTesLabel(option ? `${option.codigo} - ${option.descricao}` : codigo);
             }}
           />
+        </NotaFormGrid>
+      ) : null}
+
+      {isDebito ? (
+        <NotaFormGrid>
+          <div className="space-y-3">
+            <Label htmlFor="gerar-solicitacao">Gerar Solicitação de Compra?</Label>
+            <div className="flex items-center gap-3 pt-1 sm:pt-2">
+              <span
+                className={cn(
+                  "text-sm",
+                  !gerarSolicitacao ? "font-medium text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Não
+              </span>
+              <Switch
+                id="gerar-solicitacao"
+                checked={gerarSolicitacao}
+                onCheckedChange={setGerarSolicitacao}
+                disabled={isSubmitting}
+              />
+              <span
+                className={cn(
+                  "text-sm",
+                  gerarSolicitacao ? "font-medium text-foreground" : "text-muted-foreground",
+                )}
+              >
+                Sim
+              </span>
+            </div>
+          </div>
+
+          <NotaFormField
+            label="Número da SC"
+            htmlFor="num-sc"
+            required={numSCObrigatorio}
+          >
+            <Input
+              id="num-sc"
+              value={numSC}
+              onChange={(e) => setNumSC(e.target.value)}
+              disabled={isSubmitting || gerarSolicitacao}
+              maxLength={20}
+              autoComplete="off"
+            />
+          </NotaFormField>
         </NotaFormGrid>
       ) : null}
 

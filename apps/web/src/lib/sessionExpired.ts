@@ -5,6 +5,9 @@ const SESSION_EXPIRED_PATTERNS = [
   "sessao invalida",
   "faça login novamente",
   "faca login novamente",
+  "troca de senha",
+  "senha expirada",
+  "changepassword",
 ];
 
 export const isSessionExpiredMessage = (message?: string | null): boolean => {

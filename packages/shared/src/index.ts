@@ -14,6 +14,7 @@ export * from './mapRelHospPassToEnvelope';
 export * from './reportFormat';
 export * from './protheusAmbiente';
 export * from './protheusUserName';
+export * from './protheusPasswordPolicy';
 export * from './mapProtheusUsers';
 export * from './types/purchaseRequest';
 export * from './types/debitCreditNote';

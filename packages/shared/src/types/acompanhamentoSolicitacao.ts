@@ -94,6 +94,7 @@ export interface SolicitacaoAcompanhamento {
   numero: string;
   filial?: string;
   solicitante?: string;
+  comprador?: string;
   dataSolicitacao?: string;
   tipoCompra?: TipoCompra;
   statusAtual: StatusAcompanhamentoSolicitacao;
@@ -118,6 +119,8 @@ export interface SolicitacaoStatusNaoReconhecido {
 export interface AcompanhamentoSolicitacaoFilters {
   numero: string;
   solicitante: string;
+  comprador: string;
+  tipoCompra: TipoCompra | "";
   centroCusto: string;
   dataInicio: string;
   dataFim: string;
@@ -129,6 +132,8 @@ export interface AcompanhamentoSolicitacaoFilters {
 export const emptyAcompanhamentoSolicitacaoFilters = (): AcompanhamentoSolicitacaoFilters => ({
   numero: "",
   solicitante: "",
+  comprador: "",
+  tipoCompra: "",
   centroCusto: "",
   dataInicio: "",
   dataFim: "",

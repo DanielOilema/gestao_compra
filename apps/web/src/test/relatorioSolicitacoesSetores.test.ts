@@ -52,7 +52,7 @@ describe("catálogo do relatório de solicitações", () => {
     expect(report?.filtros.every((filtro) => filtro.obrigatorio)).toBe(true);
     expect(report?.filtros.find((filtro) => filtro.key === "grupoAprovacao")).toMatchObject({
       tipo: "selecao",
-      fonteOpcoes: "grupos-solicitacoes",
+      fonteOpcoes: "grupos-aprovacao-sc",
     });
   });
 });
@@ -60,7 +60,7 @@ describe("catálogo do relatório de solicitações", () => {
 describe("mapProtheusGruposSolicitacoes", () => {
   it("maps codigo as value and descricao as the visible label", () => {
     const grupos = mapProtheusGruposSolicitacoes({
-      grupos_solicitacoes: [
+      grupos_aprovacao: [
         { codigo: "000001", descricao: "MARKETING - SC" },
         { codigo: "000002", descricao: "TI - SC" },
       ],
@@ -74,7 +74,7 @@ describe("mapProtheusGruposSolicitacoes", () => {
 
   it("skips groups without a code", () => {
     const grupos = mapProtheusGruposSolicitacoes({
-      grupos_solicitacoes: [{ descricao: "SEM CODIGO" }, { codigo: "000003", descricao: "RH" }],
+      grupos_aprovacao: [{ descricao: "SEM CODIGO" }, { codigo: "000003", descricao: "RH" }],
     });
 
     expect(grupos).toEqual([{ codigo: "000003", descricao: "RH" }]);

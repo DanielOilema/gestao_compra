@@ -22,6 +22,7 @@ interface ProtheusPedido {
   emissao: string;
   entrega?: string;
   total: number;
+  frete?: number | string | null;
   itens: ProtheusItem[];
   logAprova?: string;
   tipoCompra?: string | number;
@@ -51,6 +52,29 @@ const parseCcusto = (raw: string): { codigo: string; descricao: string } => {
 
 const parseDate = (raw: string): string => t(raw).replace(/\//g, '-');
 
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value !== 'string') return 0;
+  const trimmed = value.trim();
+  if (!trimmed) return 0;
+  const normalized = trimmed.includes(',')
+    ? trimmed.replace(/\./g, '').replace(',', '.')
+    : trimmed;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+export const resolvePedidoTotais = (
+  order: Pick<Order, 'valor' | 'valorItens' | 'frete'>,
+): { valorItens: number; frete: number; valorPedido: number } => {
+  const frete = toNumber(order.frete);
+  const valorItens =
+    typeof order.valorItens === 'number' && Number.isFinite(order.valorItens)
+      ? order.valorItens
+      : toNumber(order.valor);
+  return { valorItens, frete, valorPedido: valorItens + frete };
+};
+
 export const mapProtheusPedido = (p: ProtheusPedido): Order => {
   const { nome } = parseFornecedor(p.fornecedor);
   const filial = t(p.filial);
@@ -75,6 +99,10 @@ export const mapProtheusPedido = (p: ProtheusPedido): Order => {
 
   const solicitante = t(p.itens?.[0]?.solicitante) || '-';
   const tipoCompra = mapProtheusTipoCompra(p.tipoCompra ?? p.tipocompra ?? p.tpcompra);
+  const totalInformado = Number(p.total);
+  const valorItensLinhas = itens.reduce((sum, item) => sum + item.valorTotal, 0);
+  const valorItens = Number.isFinite(totalInformado) ? totalInformado : valorItensLinhas;
+  const frete = toNumber(p.frete);
 
   return {
     id: `${filial}-${numero}`,
@@ -82,7 +110,9 @@ export const mapProtheusPedido = (p: ProtheusPedido): Order => {
     filial,
     fornecedor: nome,
     cnpj,
-    valor: Number(p.total) || 0,
+    valorItens,
+    frete,
+    valor: valorItens + frete,
     dataEmissao: parseDate(p.emissao),
     dataEntrega: parseDate(p.entrega || p.emissao),
     solicitante,

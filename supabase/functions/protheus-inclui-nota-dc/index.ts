@@ -1,3 +1,4 @@
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: pagamentoError });
     }
 
-    const response = await fetch(
+    const response = await fetchProtheus(
       protheusUrl('/rest/financeiro/inclui_nota_deb_cred', ambiente),
       {
       method: 'POST',
@@ -148,8 +149,9 @@ Deno.serve(async (req) => {
       // ignore
     }
 
-    if (response.status === 401 || (data as { code?: number })?.code === 401) {
-      return jsonResponse({ success: false, error: 'Sessão expirada. Faça login novamente.' });
+    const authError = getProtheusAuthError(response, data);
+    if (authError) {
+      return jsonResponse({ success: false, error: authError });
     }
 
     const parsed = parseMessagesResponse(data);

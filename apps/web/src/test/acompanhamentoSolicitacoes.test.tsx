@@ -2,11 +2,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import {
+  emptyAcompanhamentoSolicitacaoFilters,
   groupSolicitacoesPorColuna,
   mapProtheusAcompanhamentoSolicitacoesResponse,
   type PurchaseRequest,
   type SolicitacaoAcompanhamento,
 } from "@gestao-compra/shared";
+import { filtrarAcompanhamentoSolicitacoes } from "@/hooks/getAcompanhamentoSolicitacoes";
 import KanbanSolicitacoes from "@/components/solicitacoes/acompanhamento/KanbanSolicitacoes";
 import AcompanhamentoSolicitacoesPage from "@/pages/solicitacoes-compra/AcompanhamentoSolicitacoesPage";
 
@@ -20,10 +22,13 @@ vi.mock("@/contexts/AuthContext", () => ({
   }),
 }));
 
-vi.mock("@/hooks/getAcompanhamentoSolicitacoes", () => ({
-  ACOMPANHAMENTO_PAGE_SIZE: 100,
-  getAcompanhamentoSolicitacoes: (...args: unknown[]) => getAcompanhamentoSolicitacoes(...args),
-}));
+vi.mock("@/hooks/getAcompanhamentoSolicitacoes", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/getAcompanhamentoSolicitacoes")>();
+  return {
+    ...actual,
+    getAcompanhamentoSolicitacoes: (...args: unknown[]) => getAcompanhamentoSolicitacoes(...args),
+  };
+});
 
 vi.mock("@/hooks/getSolicitacoesCompra", () => ({
   SOLICITACOES_PAGE_SIZE: 20,
@@ -123,18 +128,18 @@ describe("mapProtheusAcompanhamentoSolicitacoesResponse", () => {
   it("lê o layout de busca_sc_situacao, inclusive EM COTACAO com espaço", () => {
     const result = mapProtheusAcompanhamentoSolicitacoesResponse({
       solicitacoes: [
-        { filial: "0101", numero: "010091", solicitante: "naiane.dani", status: "BLOQUEADA" },
+        { filial: "0101", numero: "010091", solicitante: "naiane.dani", comprador: "andrews.andrade", status: "BLOQUEADA" },
         { filial: "0101", numero: "008515", solicitante: "anabela.almeida", status: "EM COTACAO" },
         { filial: "0101", numero: "009152", solicitante: "luan.rocha", status: "PEDIDO" },
         { filial: "0101", numero: "000027", solicitante: "nicole.moraes", status: "APROVADA" },
       ],
     });
 
-    expect(result.solicitacoes.map((item) => [item.numero, item.statusAtual, item.filial])).toEqual([
-      ["010091", "BLOQUEADA", "0101"],
-      ["008515", "EM_COTACAO", "0101"],
-      ["009152", "PEDIDO", "0101"],
-      ["000027", "APROVADA", "0101"],
+    expect(result.solicitacoes.map((item) => [item.numero, item.statusAtual, item.filial, item.comprador])).toEqual([
+      ["010091", "BLOQUEADA", "0101", "andrews.andrade"],
+      ["008515", "EM_COTACAO", "0101", undefined],
+      ["009152", "PEDIDO", "0101", undefined],
+      ["000027", "APROVADA", "0101", undefined],
     ]);
     expect(result.naoReconhecidas).toEqual([]);
   });
@@ -192,6 +197,47 @@ describe("mapProtheusAcompanhamentoSolicitacoesResponse", () => {
   });
 });
 
+describe("filtrarAcompanhamentoSolicitacoes", () => {
+  const base: SolicitacaoAcompanhamento[] = [
+    {
+      id: "1",
+      numero: "010091",
+      statusAtual: "BLOQUEADA",
+      solicitante: "naiane.dani",
+      comprador: "danilo.sampaio",
+      tipoCompra: "1",
+    },
+    {
+      id: "2",
+      numero: "010116",
+      statusAtual: "APROVADA",
+      solicitante: "caio.batista",
+      comprador: "A definir",
+      tipoCompra: "2",
+    },
+  ];
+
+  it("filtra por solicitante, comprador e tipo de compra", () => {
+    const porSolicitante = filtrarAcompanhamentoSolicitacoes(base, [], {
+      ...emptyAcompanhamentoSolicitacaoFilters(),
+      solicitante: "NAIANE",
+    });
+    expect(porSolicitante.solicitacoes.map((item) => item.numero)).toEqual(["010091"]);
+
+    const porComprador = filtrarAcompanhamentoSolicitacoes(base, [], {
+      ...emptyAcompanhamentoSolicitacaoFilters(),
+      comprador: "A definir",
+    });
+    expect(porComprador.solicitacoes.map((item) => item.numero)).toEqual(["010116"]);
+
+    const porTipo = filtrarAcompanhamentoSolicitacoes(base, [], {
+      ...emptyAcompanhamentoSolicitacaoFilters(),
+      tipoCompra: "2",
+    });
+    expect(porTipo.solicitacoes.map((item) => item.numero)).toEqual(["010116"]);
+  });
+});
+
 describe("groupSolicitacoesPorColuna", () => {
   it("distribui os cards pela configuração das raias", () => {
     const solicitacoes: SolicitacaoAcompanhamento[] = [
@@ -223,6 +269,7 @@ describe("KanbanSolicitacoes", () => {
             numero: "001245",
             statusAtual: "EM_COTACAO",
             solicitante: "João",
+            comprador: "andrews.andrade",
             dataSolicitacao: "2026-10-02",
           },
         ]}
@@ -233,6 +280,8 @@ describe("KanbanSolicitacoes", () => {
     expect(screen.getAllByText("Nenhuma solicitação nesta etapa.").length).toBeGreaterThan(0);
     expect(screen.getAllByText("001245").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Data: 02/10/2026").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Solicitante: João").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Comprador: andrews.andrade").length).toBeGreaterThan(0);
     fireEvent.click(screen.getAllByRole("button", { name: "Solicitação 001245" })[0]);
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ numero: "001245" }));
   });
@@ -408,5 +457,52 @@ describe("AcompanhamentoSolicitacoesPage", () => {
         nomeUser: "daniel.silveira",
       }),
     );
+  });
+
+  it("filtra os cards pelo solicitante sem nova consulta", async () => {
+    getAcompanhamentoSolicitacoes.mockResolvedValue({
+      solicitacoes: [
+        { id: "1", numero: "010152", filial: "0101", statusAtual: "BLOQUEADA", solicitante: "Maria" },
+        { id: "2", numero: "010200", filial: "0101", statusAtual: "APROVADA", solicitante: "João" },
+      ],
+      naoReconhecidas: [],
+      hasNextPage: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <AcompanhamentoSolicitacoesPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findAllByText("010152")).not.toHaveLength(0);
+    fireEvent.change(screen.getByLabelText("Solicitante"), { target: { value: "joão" } });
+    expect(screen.queryByText("010152")).not.toBeInTheDocument();
+    expect(screen.getAllByText("010200").length).toBeGreaterThan(0);
+    expect(getAcompanhamentoSolicitacoes).toHaveBeenCalledTimes(1);
+  });
+
+  it("filtra os cards pelo número sem o campo de pesquisa antigo", async () => {
+    getAcompanhamentoSolicitacoes.mockResolvedValue({
+      solicitacoes: [
+        { id: "1", numero: "010152", filial: "0101", statusAtual: "BLOQUEADA", solicitante: "Maria" },
+        { id: "2", numero: "010200", filial: "0101", statusAtual: "APROVADA", solicitante: "João" },
+      ],
+      naoReconhecidas: [],
+      hasNextPage: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <AcompanhamentoSolicitacoesPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findAllByText("010152")).not.toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Pesquisar" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Número"), { target: { value: "0102" } });
+    expect(screen.queryByText("010152")).not.toBeInTheDocument();
+    expect(screen.getAllByText("010200").length).toBeGreaterThan(0);
+    expect(getAcompanhamentoSolicitacoes).toHaveBeenCalledTimes(1);
   });
 });

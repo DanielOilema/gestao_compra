@@ -39,6 +39,9 @@ const SolicitacaoCard: React.FC<SolicitacaoCardProps> = ({ solicitacao, onSelect
       {solicitacao.solicitante ? (
         <p className="mt-2 text-sm text-foreground">Solicitante: {solicitacao.solicitante}</p>
       ) : null}
+      {solicitacao.comprador ? (
+        <p className="mt-2 text-sm text-foreground">Comprador: {solicitacao.comprador}</p>
+      ) : null}
     </button>
   );
 };

@@ -17,7 +17,7 @@ import {
   writeStoredProtheusAmbiente,
 } from '@/lib/protheusAmbienteStorage';
 import { buildBasicCredential } from '@/lib/protheusBasicAuth';
-import { readSavedCredentials } from '@/lib/savedCredentials';
+import { clearSavedCredentials, readSavedCredentials } from '@/lib/savedCredentials';
 
 interface AuthContextType {
   user: User | null;
@@ -30,6 +30,12 @@ interface AuthContextType {
   login: (
     username: string,
     password: string,
+    ambiente?: ProtheusAmbiente,
+  ) => Promise<{ success: boolean; error?: string; passwordExpired?: boolean }>;
+  changePassword: (
+    username: string,
+    oldPassword: string,
+    newPassword: string,
     ambiente?: ProtheusAmbiente,
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -165,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: string,
       password: string,
       ambiente?: ProtheusAmbiente,
-    ): Promise<{ success: boolean; error?: string }> => {
+    ): Promise<{ success: boolean; error?: string; passwordExpired?: boolean }> => {
       const loginUserName = normalizeProtheusLoginUserName(username);
       if (looksLikeEmail(loginUserName)) {
         return { success: false, error: PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE };
@@ -183,6 +189,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (error) {
+          const timedOut =
+            /timeout|timed out|aborted|signal timed out/i.test(error.message || '');
+          if (timedOut) {
+            return {
+              success: false,
+              error:
+                'Tempo esgotado ao autenticar no Protheus. Se a senha estiver expirada, atualize a Edge Function protheus-login (deploy) e tente novamente.',
+            };
+          }
           const hint =
             error.message.includes('Failed to send a request to the Edge Function')
               ? ' Verifique se as Edge Functions estão em execução (supabase functions serve) ou implantadas no Supabase.'
@@ -190,6 +205,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return {
             success: false,
             error: `Não foi possível conectar ao Protheus: ${error.message}${hint}`,
+          };
+        }
+
+        if (data?.passwordExpired) {
+          return {
+            success: false,
+            passwordExpired: true,
+            error:
+              data?.error ||
+              'É necessário que o usuário efetue a troca de senha',
           };
         }
 
@@ -241,6 +266,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [],
   );
 
+  const changePassword = useCallback(
+    async (
+      username: string,
+      oldPassword: string,
+      newPassword: string,
+      ambiente?: ProtheusAmbiente,
+    ): Promise<{ success: boolean; error?: string }> => {
+      const loginUserName = normalizeProtheusLoginUserName(username);
+      if (looksLikeEmail(loginUserName)) {
+        return { success: false, error: PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE };
+      }
+
+      try {
+        const selectedAmbiente = normalizeProtheusAmbiente(
+          ambiente ?? readStoredProtheusAmbiente(),
+        );
+
+        const { data, error } = await supabase.functions.invoke('protheus-change-password', {
+          body: {
+            user: loginUserName,
+            oldPassword,
+            newPassword,
+            ambiente: selectedAmbiente,
+          },
+        });
+
+        if (error) {
+          const hint =
+            error.message.includes('Failed to send a request to the Edge Function')
+              ? ' Verifique se a Edge Function protheus-change-password está implantada.'
+              : '';
+          return {
+            success: false,
+            error: `Não foi possível trocar a senha: ${error.message}${hint}`,
+          };
+        }
+
+        if (!data?.success) {
+          return {
+            success: false,
+            error: data?.error || 'Não foi possível trocar a senha no Protheus',
+          };
+        }
+
+        return { success: true };
+      } catch {
+        return {
+          success: false,
+          error: 'Não foi possível conectar ao Protheus. Verifique sua rede.',
+        };
+      }
+    },
+    [],
+  );
+
   const logout = useCallback(() => {
     setUser(null);
     setProtheusAuth(null);
@@ -251,8 +331,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const expireSession = useCallback(
     (message?: string) => {
+      const normalized = (message || '').toLowerCase();
+      const passwordExpired =
+        normalized.includes('troca de senha') ||
+        normalized.includes('senha expirada') ||
+        normalized.includes('changepassword');
+
+      // Senha expirada: limpa credenciais salvas para forçar novo login/troca na tela inicial.
+      if (passwordExpired) {
+        clearSavedCredentials();
+      }
+
       logout();
-      toast.warning(message || "Sessão expirada. Faça login novamente.");
+      toast.warning(
+        message ||
+          (passwordExpired
+            ? 'É necessário que o usuário efetue a troca de senha. Faça login novamente.'
+            : 'Sessão expirada. Faça login novamente.'),
+      );
     },
     [logout],
   );
@@ -305,6 +401,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         permissions,
         hasPermission,
         login,
+        changePassword,
         logout,
         expireSession,
       }}

@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
-  AcompanhamentoSolicitacaoFilters,
   PurchaseRequest,
   SolicitacaoAcompanhamento,
   SolicitacaoStatusNaoReconhecido,
+  TipoCompra,
 } from "@gestao-compra/shared";
 import { emptyAcompanhamentoSolicitacaoFilters } from "@gestao-compra/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   ACOMPANHAMENTO_PAGE_SIZE,
+  filtrarAcompanhamentoSolicitacoes,
   getAcompanhamentoSolicitacoes,
 } from "@/hooks/getAcompanhamentoSolicitacoes";
 import { getSolicitacaoCompraDetalhe } from "@/hooks/getSolicitacaoCompraDetalhe";
@@ -20,11 +21,11 @@ export function useAcompanhamentoSolicitacoes() {
   const codUser = user?.protheusId?.trim() || user?.id?.trim() || "";
   const nomeUser = user?.userName?.trim() || "";
   const [numero, setNumero] = useState("");
-  const [appliedFilters, setAppliedFilters] = useState<AcompanhamentoSolicitacaoFilters>(
-    emptyAcompanhamentoSolicitacaoFilters(),
-  );
-  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoAcompanhamento[]>([]);
-  const [naoReconhecidas, setNaoReconhecidas] = useState<SolicitacaoStatusNaoReconhecido[]>([]);
+  const [solicitante, setSolicitante] = useState("");
+  const [comprador, setComprador] = useState("");
+  const [tipoCompra, setTipoCompra] = useState<TipoCompra | "">("");
+  const [carregadas, setCarregadas] = useState<SolicitacaoAcompanhamento[]>([]);
+  const [naoReconhecidasBase, setNaoReconhecidasBase] = useState<SolicitacaoStatusNaoReconhecido[]>([]);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,12 +36,12 @@ export function useAcompanhamentoSolicitacoes() {
   const detailRequestId = useRef(0);
 
   const load = useCallback(
-    async (filters: AcompanhamentoSolicitacaoFilters) => {
+    async () => {
       if (!protheusAuth) {
         setIsLoading(false);
         setError(SESSAO_INDISPONIVEL);
-        setSolicitacoes([]);
-        setNaoReconhecidas([]);
+        setCarregadas([]);
+        setNaoReconhecidasBase([]);
         setHasNextPage(false);
         return;
       }
@@ -49,17 +50,16 @@ export function useAcompanhamentoSolicitacoes() {
       setError(null);
       try {
         const result = await getAcompanhamentoSolicitacoes({
-          filters,
+          filters: emptyAcompanhamentoSolicitacaoFilters(),
           page: 1,
           pageSize: ACOMPANHAMENTO_PAGE_SIZE,
           basicAuth: protheusAuth,
           codUser,
           nomeUser,
         });
-        setSolicitacoes(result.solicitacoes);
-        setNaoReconhecidas(result.naoReconhecidas);
+        setCarregadas(result.solicitacoes);
+        setNaoReconhecidasBase(result.naoReconhecidas);
         setHasNextPage(result.hasNextPage);
-        setAppliedFilters(filters);
         detailRequestId.current += 1;
         setDetailTarget(null);
         setDetailRequest(null);
@@ -69,8 +69,8 @@ export function useAcompanhamentoSolicitacoes() {
         const message =
           err instanceof Error ? err.message : "Não foi possível carregar as solicitações.";
         setError(message);
-        setSolicitacoes([]);
-        setNaoReconhecidas([]);
+        setCarregadas([]);
+        setNaoReconhecidasBase([]);
         setHasNextPage(false);
       } finally {
         setIsLoading(false);
@@ -85,19 +85,28 @@ export function useAcompanhamentoSolicitacoes() {
       setError(SESSAO_INDISPONIVEL);
       return;
     }
-    void load(emptyAcompanhamentoSolicitacaoFilters());
+    void load();
   }, [protheusAuth, load]);
 
-  const buscar = useCallback(() => {
-    void load({
+  const filtros = useMemo(
+    () => ({
       ...emptyAcompanhamentoSolicitacaoFilters(),
-      numero: numero.trim(),
-    });
-  }, [load, numero]);
+      numero,
+      solicitante,
+      comprador,
+      tipoCompra,
+    }),
+    [numero, solicitante, comprador, tipoCompra],
+  );
+
+  const filtrado = useMemo(
+    () => filtrarAcompanhamentoSolicitacoes(carregadas, naoReconhecidasBase, filtros),
+    [carregadas, naoReconhecidasBase, filtros],
+  );
 
   const retry = useCallback(() => {
-    void load(appliedFilters);
-  }, [appliedFilters, load]);
+    void load();
+  }, [load]);
 
   const loadDetail = useCallback(
     async (solicitacao: SolicitacaoAcompanhamento) => {
@@ -158,8 +167,14 @@ export function useAcompanhamentoSolicitacoes() {
   return {
     numero,
     setNumero,
-    solicitacoes,
-    naoReconhecidas,
+    solicitante,
+    setSolicitante,
+    comprador,
+    setComprador,
+    tipoCompra,
+    setTipoCompra,
+    solicitacoes: filtrado.solicitacoes,
+    naoReconhecidas: filtrado.naoReconhecidas,
     hasNextPage,
     isLoading,
     error,
@@ -167,7 +182,6 @@ export function useAcompanhamentoSolicitacoes() {
     detailRequest,
     detailLoading,
     detailError,
-    buscar,
     retry,
     selectSolicitacao,
     retryDetail,

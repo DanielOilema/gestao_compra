@@ -4,6 +4,7 @@ import { PROTHEUS_AMBIENTE_OPTIONS, looksLikeEmail, PROTHEUS_EMAIL_LOGIN_BLOCKED
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useEnvironment } from '@/contexts/EnvironmentContext';
+import ChangePasswordDialog from '@/components/ChangePasswordDialog';
 import {
   Button,
   Checkbox,
@@ -35,7 +36,10 @@ const LoginForm: React.FC = () => {
   const [savePassword, setSavePassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [ambienteOpen, setAmbienteOpen] = useState(false);
-  const { login, isLoading } = useAuth();
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [changePasswordMessage, setChangePasswordMessage] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const { login, changePassword, isLoading } = useAuth();
   const { ambiente, label: ambienteLabel, setAmbiente } = useEnvironment();
   const navigate = useNavigate();
 
@@ -55,6 +59,34 @@ const LoginForm: React.FC = () => {
     }
   };
 
+  const completeLogin = async (
+    loginUser: string,
+    loginPassword: string,
+  ): Promise<boolean> => {
+    const result = await login(loginUser, loginPassword, ambiente);
+
+    if (result.passwordExpired) {
+      setChangePasswordMessage(result.error || '');
+      setChangePasswordOpen(true);
+      toast.warning(result.error || 'É necessário que o usuário efetue a troca de senha');
+      return false;
+    }
+
+    if (!result.success) {
+      toast.error(result.error || `Não foi possível realizar o login para o usuário ${loginUser}`);
+      return false;
+    }
+
+    if (savePassword) {
+      writeSavedCredentials(loginUser, loginPassword);
+    } else {
+      clearSavedCredentials();
+    }
+    toast.success('Login realizado com sucesso!');
+    navigate('/home', { replace: true });
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -68,18 +100,24 @@ const LoginForm: React.FC = () => {
       return;
     }
 
-    const result = await login(username, password, ambiente);
+    await completeLogin(username, password);
+  };
 
-    if (result.success) {
-      if (savePassword) {
-        writeSavedCredentials(username, password);
-      } else {
-        clearSavedCredentials();
+  const handleChangePassword = async (newPassword: string) => {
+    setIsChangingPassword(true);
+    try {
+      const result = await changePassword(username, password, newPassword, ambiente);
+      if (!result.success) {
+        toast.error(result.error || 'Não foi possível trocar a senha');
+        return;
       }
-      toast.success('Login realizado com sucesso!');
-      navigate('/home', { replace: true });
-    } else {
-      toast.error(result.error || `Não foi possível realizar o login para o usuário ${username}`);
+
+      toast.success('Senha alterada com sucesso. Entrando...');
+      setPassword(newPassword);
+      setChangePasswordOpen(false);
+      await completeLogin(username, newPassword);
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -107,7 +145,7 @@ const LoginForm: React.FC = () => {
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    disabled={isLoading}
+                    disabled={isLoading || isChangingPassword}
                     className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="flex flex-col items-start gap-0.5">
@@ -126,7 +164,7 @@ const LoginForm: React.FC = () => {
                     value={ambiente}
                     onValueChange={(value) => setAmbiente(value as typeof ambiente)}
                     className="grid grid-cols-1 gap-2 sm:grid-cols-2"
-                    disabled={isLoading}
+                    disabled={isLoading || isChangingPassword}
                   >
                     {PROTHEUS_AMBIENTE_OPTIONS.map((option) => {
                       const selected = option.value === ambiente;
@@ -143,7 +181,7 @@ const LoginForm: React.FC = () => {
                           <RadioGroupItem
                             id={`ambiente-${option.value}`}
                             value={option.value}
-                            disabled={isLoading}
+                            disabled={isLoading || isChangingPassword}
                           />
                           <span>{option.label}</span>
                         </Label>
@@ -164,7 +202,7 @@ const LoginForm: React.FC = () => {
                   spellCheck={false}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || isChangingPassword}
                   className="h-11"
                 />
               </div>
@@ -179,7 +217,7 @@ const LoginForm: React.FC = () => {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={isLoading}
+                    disabled={isLoading || isChangingPassword}
                     className="h-11 pr-10"
                   />
                   <button
@@ -197,7 +235,7 @@ const LoginForm: React.FC = () => {
                   id="save-password"
                   checked={savePassword}
                   onCheckedChange={handleSavePasswordChange}
-                  disabled={isLoading}
+                  disabled={isLoading || isChangingPassword}
                 />
                 <Label htmlFor="save-password" className="cursor-pointer text-sm font-normal">
                   Salvar senha
@@ -206,7 +244,7 @@ const LoginForm: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full h-11 text-base font-medium"
-                disabled={isLoading}
+                disabled={isLoading || isChangingPassword}
               >
                 {isLoading ? (
                   <>
@@ -224,6 +262,14 @@ const LoginForm: React.FC = () => {
           </CardContent>
         </Card>
 
+        <ChangePasswordDialog
+          open={changePasswordOpen}
+          username={username}
+          message={changePasswordMessage}
+          isSubmitting={isChangingPassword || isLoading}
+          onOpenChange={setChangePasswordOpen}
+          onSubmit={handleChangePassword}
+        />
       </div>
     </div>
   );

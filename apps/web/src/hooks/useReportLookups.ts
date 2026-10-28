@@ -2,10 +2,10 @@ import type { ReportFilterDef, ReportFilterOption } from "@gestao-compra/shared"
 import {
   RELATORIO_PC_SETORES_FILTRO_GRUPOS,
   RELATORIO_PC_SETORES_LOOKUP_GRUPOS,
+  RELATORIO_SC_SETORES_FILTRO_GRUPOS,
   RELATORIO_SC_SETORES_LOOKUP_GRUPOS,
 } from "@gestao-compra/shared";
 import { useGruposAprovacao } from "@/hooks/useGruposAprovacao";
-import { useGruposSolicitacoes } from "@/hooks/useGruposSolicitacoes";
 
 export interface ReportFilterLookup {
   options: ReportFilterOption[];
@@ -25,7 +25,7 @@ export function useReportLookups(filtros: ReportFilterDef[]): Record<string, Rep
   const needsGruposPc = filtros.some(
     (filtro) => filtro.fonteOpcoes === RELATORIO_PC_SETORES_LOOKUP_GRUPOS,
   );
-  const gruposSc = useGruposSolicitacoes(needsGruposSc);
+  const gruposSc = useGruposAprovacao(RELATORIO_SC_SETORES_FILTRO_GRUPOS, needsGruposSc);
   const gruposPc = useGruposAprovacao(RELATORIO_PC_SETORES_FILTRO_GRUPOS, needsGruposPc);
 
   const lookups: Record<string, ReportFilterLookup> = {};

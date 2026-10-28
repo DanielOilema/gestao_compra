@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Order, OrderStatus } from "@gestao-compra/shared";
+import { Order, OrderStatus, resolvePedidoTotais } from "@gestao-compra/shared";
 import { formatOrderDisplay } from "@gestao-compra/shared";
 import {
   Card,
@@ -60,6 +60,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onBack, tipo = "pedido
   const [observacao, setObservacao] = useState("");
   const [obsError, setObsError] = useState<string | undefined>();
   const { aprovar, bloquear, isLoading } = useAprovaCompra(order, tipo);
+  const { valorItens, frete, valorPedido } = resolvePedidoTotais(order);
 
   const handleBlock = async () => {
     if (!observacao.trim()) {
@@ -279,10 +280,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onBack, tipo = "pedido
             <>
               <Separator className="my-3 sm:my-4" />
 
-              <div className="flex justify-end">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end sm:gap-4">
+                <div>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Valor Total dos Itens</p>
+                  <p className="text-base sm:text-lg font-semibold text-primary">{formatCurrency(valorItens)}</p>
+                </div>
+                <div className="sm:text-center">
+                  <p className="text-xs sm:text-sm text-muted-foreground">Valor do Frete</p>
+                  <p className="text-base sm:text-lg font-semibold text-primary">{formatCurrency(frete)}</p>
+                </div>
                 <div className="text-right">
                   <p className="text-xs sm:text-sm text-muted-foreground">Valor Total do Pedido</p>
-                  <p className="text-xl sm:text-2xl font-bold text-primary">{formatCurrency(order.valor)}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-primary">{formatCurrency(valorPedido)}</p>
                 </div>
               </div>
             </>

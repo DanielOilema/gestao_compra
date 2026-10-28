@@ -112,6 +112,10 @@ export interface NotaFormPayload {
   conta?: string;
   nomeRecebedor?: string;
   cpfCnpjRecebedor?: string;
+  /** Débito: se true, Protheus gera a SC; se false, vincula à SC informada em `numSC`. */
+  gerarSolicitacao?: boolean;
+  /** Número da SC existente (débito, quando `gerarSolicitacao` é false). */
+  numSC?: string;
   itens: Omit<NotaItemDraft, "id">[];
 }
 
@@ -141,7 +145,14 @@ export interface IncluiNotaDebCreBody {
   natureza?: string;
   tes?: string;
   referenteA: string;
+  /** SC existente (6 caracteres) quando a nota de débito não gera nova SC. */
+  numSC?: string;
   itens: IncluiNotaDCItemPayload[];
+}
+
+/** Normaliza o número da SC para 6 caracteres com zeros à esquerda. */
+export function padNumSC(value: string): string {
+  return value.trim().slice(-6).padStart(6, "0");
 }
 
 export interface IncluiNotaDCPayload {

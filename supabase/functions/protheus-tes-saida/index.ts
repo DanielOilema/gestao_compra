@@ -1,3 +1,4 @@
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { protheusUrl } from '../_shared/protheusConfig.ts';
 import { parseProtheusJson } from '../_shared/protheusResponse.ts';
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
 
     const baseUrl = protheusUrl('/rest/tes_saida', ambiente);
     const url = `${baseUrl}?${params.toString()}`;
-    const response = await fetch(url, {
+    const response = await fetchProtheus(url, {
       method: 'GET',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -46,9 +47,10 @@ Deno.serve(async (req) => {
       // ignore
     }
 
-    if (response.status === 401 || (data as { code?: number })?.code === 401) {
+    const authError = getProtheusAuthError(response, data);
+    if (authError) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sessão expirada. Faça login novamente.' }),
+        JSON.stringify({ success: false, error: authError }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

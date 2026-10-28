@@ -9,6 +9,7 @@ import {
 } from '../_shared/permissionsDb.ts';
 import { getAdminUserId } from '../_shared/routineIds.ts';
 import { BASIC_AUTH_REQUIRED_MESSAGE, basicAuthHeader, isValidBasicAuth } from '../_shared/protheusAuth.ts';
+import { fetchProtheus, getProtheusAuthError } from '../_shared/protheusFetch.ts';
 
 function getUsersPath(): string {
   return Deno.env.get('PROTHEUS_USERS_PATH')?.trim() || '/rest/users';
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
 
     await assertCallerIsAdmin(userName.trim());
 
-    const response = await fetch(protheusUrl(getUsersPath(), ambiente), {
+    const response = await fetchProtheus(protheusUrl(getUsersPath(), ambiente), {
       method: 'GET',
       headers: {
         Authorization: basicAuthHeader(basicAuth),
@@ -78,9 +79,10 @@ Deno.serve(async (req) => {
       // ignore
     }
 
-    if (response.status === 401 || (data as { code?: number })?.code === 401) {
+    const authError = getProtheusAuthError(response, data);
+    if (authError) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Sessão expirada. Faça login novamente.' }),
+        JSON.stringify({ success: false, error: authError }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

@@ -2,7 +2,8 @@ import type { ReportColumn } from './types/report';
 
 export const RELATORIO_SC_SETORES_ID = 'solicitacoes-setores';
 export const RELATORIO_SC_SETORES_TITULO = 'Solicitações de Compras';
-export const RELATORIO_SC_SETORES_LOOKUP_GRUPOS = 'grupos-solicitacoes';
+export const RELATORIO_SC_SETORES_LOOKUP_GRUPOS = 'grupos-aprovacao-sc';
+export const RELATORIO_SC_SETORES_FILTRO_GRUPOS = 'SC';
 
 export const RELATORIO_SC_SETORES_COLUMNS: ReportColumn[] = [
   { key: 'filial', label: 'Filial', formato: 'texto', largura: 10 },

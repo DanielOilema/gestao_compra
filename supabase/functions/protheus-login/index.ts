@@ -1,13 +1,22 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { getProtheusBaseUrl, normalizeProtheusAmbiente, protheusUrl } from '../_shared/protheusConfig.ts';
-import { parseProtheusJson } from '../_shared/protheusResponse.ts';
+import { parseProtheusJson, readProtheusText } from '../_shared/protheusResponse.ts';
 import {
   looksLikeEmail,
   PROTHEUS_EMAIL_LOGIN_BLOCKED_MESSAGE,
 } from '../_shared/protheusUserName.ts';
+import { PROTHEUS_PASSWORD_EXPIRED_MESSAGE } from '../_shared/protheusPasswordPolicy.ts';
 
 function sanitizeErrorMessage(message: string): string {
   return message.replace(/password=[^&\s)]*/gi, 'password=***');
+}
+
+function isPasswordExpiredRedirect(response: Response): boolean {
+  if (response.status !== 302 && response.status !== 303 && response.status !== 307) {
+    return false;
+  }
+  const location = response.headers.get('location') ?? '';
+  return location.toLowerCase().includes('changepassworduserservice');
 }
 
 Deno.serve(async (req) => {
@@ -39,8 +48,13 @@ Deno.serve(async (req) => {
     const tokenUrl = new URL(protheusUrl('/rest/api/oauth2/v1/token', selectedAmbiente));
     tokenUrl.searchParams.set('grant_type', 'password');
 
+    // redirect:'manual' é obrigatório: com senha expirada o Protheus devolve 302
+    // com Location apontando para changepassworduserservice (às vezes em IP interno).
+    // Seguir o redirect trava a Edge Function (timeout sem resposta ao front).
     const response = await fetch(tokenUrl, {
       method: 'POST',
+      redirect: 'manual',
+      signal: AbortSignal.timeout(20_000),
       headers: {
         username: loginUserName,
         password,
@@ -48,11 +62,69 @@ Deno.serve(async (req) => {
       },
     });
 
+    const locationHeader = response.headers.get('location') ?? '';
+    const passwordExpired =
+      isPasswordExpiredRedirect(response) ||
+      locationHeader.toLowerCase().includes('changepassworduserservice');
+
+    if (passwordExpired) {
+      let message = PROTHEUS_PASSWORD_EXPIRED_MESSAGE;
+      try {
+        const bodyText = (await readProtheusText(response)).trim();
+        if (bodyText) message = bodyText;
+      } catch {
+        // keep default message
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          passwordExpired: true,
+          error: message,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Resposta opaca (status 0) em alguns runtimes quando há redirect não seguido.
+    if (response.status === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          passwordExpired: true,
+          error: PROTHEUS_PASSWORD_EXPIRED_MESSAGE,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     let data: any = null;
+    let bodyText = '';
     try {
-      data = await parseProtheusJson(response);
+      bodyText = await readProtheusText(response);
+      if (bodyText.trim()) {
+        try {
+          data = JSON.parse(bodyText);
+        } catch {
+          data = null;
+        }
+      }
     } catch {
       // ignore
+    }
+
+    if (
+      bodyText.toLowerCase().includes('troca de senha') ||
+      bodyText.toLowerCase().includes('changepassword')
+    ) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          passwordExpired: true,
+          error: bodyText.trim() || PROTHEUS_PASSWORD_EXPIRED_MESSAGE,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
     // O token não é mais usado pelo app (as demais chamadas usam Basic auth);
