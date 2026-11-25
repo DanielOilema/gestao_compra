@@ -49,10 +49,10 @@ export function buildNotasExportPayload(
     colunas: COLUNAS,
     linhas: rows.map(toRow),
     meta: {
-      titulo: "Notas de Débito e Crédito",
+      titulo: "Recibos de Débito e Crédito",
       // A listagem é paginada, então o documento diz o que ele realmente contém.
-      subtitulo: `Página ${page} — ${rows.length} ${rows.length === 1 ? "nota" : "notas"}`,
-      nomeArquivo: "notas-debito-credito",
+      subtitulo: `Página ${page} — ${rows.length} ${rows.length === 1 ? "recibo" : "recibos"}`,
+      nomeArquivo: "recibos-debito-credito",
       filtros: buildFiltroSummary(filters),
       totais: { valorTotal: total },
     },

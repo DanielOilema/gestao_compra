@@ -43,7 +43,7 @@ const NotasSearchInput: React.FC<NotasSearchInputProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Pesquisar por nº da nota"
+          placeholder="Pesquisar por nº do recibo"
           className="pl-9"
           disabled={disabled}
         />

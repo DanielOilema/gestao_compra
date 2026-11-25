@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const message =
         (data as { message?: string })?.message ||
-        `Falha ao buscar detalhe da nota (HTTP ${response.status})`;
+        `Falha ao buscar detalhe do recibo (HTTP ${response.status})`;
       return new Response(
         JSON.stringify({ success: false, error: message }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

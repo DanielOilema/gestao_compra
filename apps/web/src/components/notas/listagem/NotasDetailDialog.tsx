@@ -24,7 +24,7 @@ const NotasDetailDialog: React.FC<NotasDetailDialogProps> = ({
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader className="sr-only">
-        <DialogTitle>Detalhe da nota</DialogTitle>
+        <DialogTitle>Detalhe do recibo</DialogTitle>
       </DialogHeader>
       {nota ? (
         <NotasDetailContent

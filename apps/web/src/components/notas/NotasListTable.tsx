@@ -25,7 +25,7 @@ const NotasListTable: React.FC<NotasListTableProps> = ({ notas }) => {
   if (notas.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        Nenhuma nota encontrada com os filtros selecionados.
+        Nenhum recibo encontrado com os filtros selecionados.
       </p>
     );
   }

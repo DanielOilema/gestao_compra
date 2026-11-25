@@ -102,7 +102,7 @@ const NotaForm: React.FC = () => {
 
       <div className="space-y-2">
         <Label htmlFor="descricao">Descrição *</Label>
-        <Textarea id="descricao" placeholder="Descreva o motivo da nota..." {...register("descricao")} />
+        <Textarea id="descricao" placeholder="Descreva o motivo do recibo..." {...register("descricao")} />
         {errors.descricao && <p className="text-sm text-destructive">{errors.descricao.message}</p>}
       </div>
 
@@ -128,7 +128,7 @@ const NotaForm: React.FC = () => {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit">Salvar nota</Button>
+        <Button type="submit">Salvar recibo</Button>
       </div>
     </form>
   );

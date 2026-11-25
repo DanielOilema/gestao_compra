@@ -45,7 +45,7 @@ export const ROUTINE_LABELS: Record<RoutinePermissionId, string> = {
   aprovacoes: 'Aprovação de Compra',
   'solicitacoes-compra': 'Solicitação de Compra',
   'acompanhamento-solicitacoes': 'Acompanhamento de Solicitações',
-  'notas-debito-credito': 'Nota de Débito/Crédito',
+  'notas-debito-credito': 'Recibo de Débito/Crédito',
   transportadoras: 'Transportadoras',
   'relatorios-financeiro': 'Relatórios do Financeiro',
   'relatorios-compras': 'Solicitações de Compras',

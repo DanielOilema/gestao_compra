@@ -30,7 +30,7 @@ const NotasMobileItem: React.FC<NotasMobileItemProps> = ({ row, selected, onSele
 
     <div className="mt-1 flex items-start justify-between gap-2">
       <div className="min-w-0">
-        <p className="font-semibold text-foreground">Nota {row.numero}</p>
+        <p className="font-semibold text-foreground">Recibo {row.numero}</p>
         <p className="text-sm text-muted-foreground truncate">{row.nomeCliFor || "-"}</p>
       </div>
       <StatusBadge status={row.tipo} />

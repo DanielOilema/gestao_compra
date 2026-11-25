@@ -75,15 +75,15 @@ const validatePagamento = (det: Record<string, unknown>): string | null => {
   if (!forma) return 'condPagto é obrigatório';
 
   if (tipo === 'C' && forma !== FORMA_PAGAMENTO_CREDITO) {
-    return 'Notas de crédito devem usar forma de pagamento Crédito (6)';
+    return 'Recibos de crédito devem usar forma de pagamento Crédito (6)';
   }
 
   if (tipo === 'D') {
     if (forma === FORMA_PAGAMENTO_CREDITO) {
-      return 'Notas de débito não podem usar forma de pagamento Crédito (6)';
+      return 'Recibos de débito não podem usar forma de pagamento Crédito (6)';
     }
     if (!FORMAS_DEBITO.has(forma)) {
-      return 'Forma de pagamento inválida para nota de débito';
+      return 'Forma de pagamento inválida para recibo de débito';
     }
   }
 
@@ -159,14 +159,14 @@ Deno.serve(async (req) => {
     if (!response.ok || !parsed.success) {
       return jsonResponse({
         success: false,
-        error: parsed.descricao || `Falha ao incluir nota (HTTP ${response.status})`,
+        error: parsed.descricao || `Falha ao incluir recibo (HTTP ${response.status})`,
       });
     }
 
     return jsonResponse({
       success: true,
       data: {
-        mensagem: parsed.descricao || 'Nota incluída com sucesso',
+        mensagem: parsed.descricao || 'Recibo incluído com sucesso',
         numero: parsed.codigoNota,
       },
     });

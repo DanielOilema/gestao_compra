@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const message =
         (data as { message?: string })?.message ||
-        `Falha ao buscar notas (HTTP ${response.status})`;
+        `Falha ao buscar recibos (HTTP ${response.status})`;
       return new Response(
         JSON.stringify({ success: false, error: message }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

@@ -15,6 +15,7 @@ export const SETOR_NOTA_DC_OPTIONS: SetorNotaDCOption[] = [
   { codigo: "009", descricao: "LEGALIDADE" },
   { codigo: "010", descricao: "COMPRAS" },
   { codigo: "011", descricao: "ADMINISTRATIVO" },
+  { codigo: "012", descricao: "FATURAMENTO" },
 ];
 
 export const getSetorNotaDCLabel = (codigo: string): string => {

@@ -57,7 +57,7 @@ const printFrame = (iframe: HTMLIFrameElement): Promise<void> =>
         frameWindow.print();
       } catch (err) {
         iframe.remove();
-        reject(err instanceof Error ? err : new Error("Erro ao imprimir nota"));
+        reject(err instanceof Error ? err : new Error("Erro ao imprimir recibo"));
         return;
       }
 

@@ -17,7 +17,7 @@ export const useIncluiNotaDC = () => {
       return invokeProtheusFunction<IncluiNotaDCResult>(
         "protheus-inclui-nota-dc",
         { ...payload, basicAuth: protheusAuth },
-        "Falha ao incluir nota de débito/crédito",
+        "Falha ao incluir recibo de débito/crédito",
       );
     },
     onSuccess: (result) => {
@@ -26,7 +26,7 @@ export const useIncluiNotaDC = () => {
       void queryClient.invalidateQueries({ queryKey: ["notas-debito-credito"] });
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Falha ao incluir nota");
+      toast.error(error instanceof Error ? error.message : "Falha ao incluir recibo");
     },
   });
 };

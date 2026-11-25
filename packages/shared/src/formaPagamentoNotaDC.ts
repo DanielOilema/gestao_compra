@@ -64,19 +64,19 @@ export const validateNotaPagamento = ({
   if (tipo === "credito" && formaPagamento !== FORMA_PAGAMENTO_CREDITO) {
     return {
       valid: false,
-      error: "Notas de crédito devem usar a forma de pagamento Crédito",
+      error: "Recibos de crédito devem usar a forma de pagamento Crédito",
     };
   }
 
   if (tipo === "debito" && formaPagamento === FORMA_PAGAMENTO_CREDITO) {
     return {
       valid: false,
-      error: "Notas de débito não podem usar a forma de pagamento Crédito",
+      error: "Recibos de débito não podem usar a forma de pagamento Crédito",
     };
   }
 
   if (tipo === "debito" && !FORMA_PAGAMENTO_DEBITO_OPTIONS.some((o) => o.value === formaPagamento)) {
-    return { valid: false, error: "Forma de pagamento inválida para nota de débito" };
+    return { valid: false, error: "Forma de pagamento inválida para recibo de débito" };
   }
 
   if (isDeposito(formaPagamento)) {

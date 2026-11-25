@@ -54,9 +54,9 @@ export const NotaLeaveProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Descartar nota?</AlertDialogTitle>
+            <AlertDialogTitle>Descartar recibo?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você já começou a preencher esta nota. Se sair agora, os dados informados serão
+              Você já começou a preencher este recibo. Se sair agora, os dados informados serão
               perdidos.
             </AlertDialogDescription>
           </AlertDialogHeader>

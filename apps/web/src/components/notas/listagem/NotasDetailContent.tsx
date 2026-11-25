@@ -65,7 +65,7 @@ const NotasDetailContent: React.FC<NotasDetailContentProps> = ({
 
     void printNotaDebCre({ nota, basicAuth: protheusAuth, session })
       .catch((err) => {
-        toast.error(err instanceof Error ? err.message : "Erro ao imprimir nota");
+        toast.error(err instanceof Error ? err.message : "Erro ao imprimir recibo");
       })
       .finally(() => {
         setPrinting(false);
@@ -98,7 +98,7 @@ const NotasDetailContent: React.FC<NotasDetailContentProps> = ({
 
               <span className="truncate">
 
-                Nota {nota.numero} — Filial {nota.filial}
+                Recibo {nota.numero} — Filial {nota.filial}
 
               </span>
 
@@ -110,7 +110,7 @@ const NotasDetailContent: React.FC<NotasDetailContentProps> = ({
 
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
 
-            Nota de {nota.tipo === "credito" ? "Crédito" : "Débito"}
+            Recibo de {nota.tipo === "credito" ? "Crédito" : "Débito"}
 
           </p>
 

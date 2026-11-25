@@ -69,8 +69,8 @@ export const appModuleGroups: AppModuleGroup[] = [
       },
       {
         id: "notas-debito-credito",
-        title: "Notas de Débito e Crédito",
-        description: "Gerenciar notas de débito e crédito vinculadas a pedidos ou faturas",
+        title: "Recibos de Débito e Crédito",
+        description: "Gerenciar recibos de débito e crédito vinculados a pedidos ou faturas",
         path: "/notas-debito-credito",
         icon: Receipt,
         enabled: true,

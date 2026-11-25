@@ -53,7 +53,7 @@ const itemDraftBaseSchema = z.object({
   unidade: z.string().min(1, "Unidade obrigatória"),
   centroCusto: z.string(),
   centroCustoDescricao: z.string(),
-  quantidade: z.coerce.number().min(1, "Quantidade mínima: 1"),
+  quantidade: z.coerce.number().gt(0, "Quantidade deve ser maior que zero"),
   observacao: z.string().trim().min(1, "Informe a observação"),
   placa: z.string(),
   dataEntrega: z
@@ -463,7 +463,8 @@ const SolicitacaoForm: React.FC<SolicitacaoFormProps> = ({
             <Input
               id="quantidade"
               type="number"
-              min={1}
+              min={0}
+              step="any"
               value={draft.quantidade}
               disabled={!filialSelected}
               onChange={(e) => updateDraft("quantidade", Number(e.target.value))}

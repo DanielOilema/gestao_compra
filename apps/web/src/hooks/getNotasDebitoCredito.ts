@@ -52,7 +52,7 @@ export async function getNotasDebitoCredito({
       dtInicial: dtInicial || undefined,
       dtFinal: dtFinal || undefined,
     },
-    "Falha ao buscar notas de débito/crédito",
+    "Falha ao buscar recibos de débito/crédito",
   );
 
   const mapped = mapProtheusNotasDebitoCreditoResponse(data ?? {});

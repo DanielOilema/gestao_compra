@@ -15,7 +15,7 @@ const NovaNotaLayout: React.FC = () => {
   return (
     <>
       <PageHeader
-        title="Notas de Débito e Crédito"
+        title="Recibos de Débito e Crédito"
         onBackToMenuClick={() => confirmLeave(() => navigate("/home"))}
       />
       <div className="w-full min-w-0">
@@ -48,7 +48,7 @@ const NotasLayout: React.FC = () => {
         </NotaLeaveProvider>
       ) : (
         <>
-          <PageHeader title="Notas de Débito e Crédito" />
+          <PageHeader title="Recibos de Débito e Crédito" />
           <ListagemNotasPage />
         </>
       )}

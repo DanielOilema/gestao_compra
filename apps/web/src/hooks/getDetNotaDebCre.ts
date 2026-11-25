@@ -20,7 +20,7 @@ export async function getDetNotaDebCre(params: {
       codigo: params.codigo,
       basicAuth: params.basicAuth,
     },
-    "Falha ao buscar detalhe da nota",
+    "Falha ao buscar detalhe do recibo",
   );
 
   return mapProtheusDetNotaDebCreResponse(data ?? {}, params.header);

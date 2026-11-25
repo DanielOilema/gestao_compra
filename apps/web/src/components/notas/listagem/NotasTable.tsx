@@ -29,7 +29,7 @@ const NotasTable: React.FC<NotasTableProps> = ({ rows, selectedRowId, onSelectRo
   if (rows.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        Nenhuma nota encontrada.
+        Nenhum recibo encontrado.
       </p>
     );
   }

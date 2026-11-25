@@ -19,10 +19,10 @@ export const formatNotaPrintCurrency = (value: number): string =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value || 0);
 
 export const getNotaPrintTitle = (tipo: DebitCreditNote["tipo"]): string =>
-  tipo === "credito" ? "NOTA DE CRÉDITO" : "NOTA DE DÉBITO";
+  tipo === "credito" ? "RECIBO DE CRÉDITO" : "RECIBO DE DÉBITO";
 
 export const getNotaPrintNumeroLabel = (tipo: DebitCreditNote["tipo"]): string =>
-  tipo === "credito" ? "Nota de Crédito Número" : "Nota de Débito Número";
+  tipo === "credito" ? "Recibo de Crédito Número" : "Recibo de Débito Número";
 
 export const formatNotaPrintCnpjCpf = (value?: string): string => {
   const raw = value?.trim() ?? "";

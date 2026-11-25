@@ -41,7 +41,7 @@ export function useNotasDebitoCreditoList() {
         setSelectedRowId(null);
         setDetailNota(null);
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Erro ao buscar notas");
+        toast.error(err instanceof Error ? err.message : "Erro ao buscar recibos");
         setNotas([]);
         setRows([]);
         setHasNextPage(false);

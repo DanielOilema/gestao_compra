@@ -101,7 +101,7 @@ const NotaItensTable: React.FC<NotaItensTableProps> = ({ items, tipo, onChange }
   return (
     <div className="space-y-3 min-w-0">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-sm font-medium">Itens da nota</h3>
+        <h3 className="text-sm font-medium">Itens do recibo</h3>
         <Button
           type="button"
           variant="outline"
